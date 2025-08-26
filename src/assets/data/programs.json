@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "title": "Healthy Eating Workshop",
+    "category": "Nutrition",
+    "summary": "Learn the basics of balanced diets and healthy cooking.",
+    "link": "https://example.org/workshop1"
+  },
+  {
+    "id": 2,
+    "title": "Community Yoga Sessions",
+    "category": "Fitness",
+    "summary": "Free yoga classes every weekend in the local park.",
+    "link": "https://example.org/yoga"
+  },
+  {
+    "id": 3,
+    "title": "Mental Health Awareness",
+    "category": "Wellbeing",
+    "summary": "Join talks and activities to support mental health.",
+    "link": "https://example.org/mentalhealth"
+  }
+]
