@@ -103,7 +103,11 @@ export default {
                 // 注册成功，跳转登录页
                 this.$router.push("/login");
             } catch (err) {
-                this.formError = err.message;
+                if (err.code === "auth/email-already-in-use") {
+                    this.formError = "This email is already registered.";
+                } else {
+                    this.formError = "Registration failed. Please try again.";
+                }
                 console.error("Register error:", err);
             }
         }

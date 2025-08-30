@@ -4,12 +4,13 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
+import Account from '../views/Account.vue'
 // import About from '../views/About.vue'
 // import Services from '../views/Services.vue'
 // import Resources from '../views/Resources.vue'
 // import Support from '../views/Support.vue'
 // import Wellbeing from '../views/Wellbeing.vue'
-// import Account from '../views/Account.vue'
+
 
 // import AdminDashboard from '../views/AdminDashboard.vue'
 // import AdminResources from '../views/AdminResources.vue'
@@ -25,7 +26,7 @@ const routes = [
   // { path: '/resources', component: Resources },
   // { path: '/support', component: Support },
   // { path: '/wellbeing', component: Wellbeing },
-  // { path: '/account', component: Account },
+  { path: '/account', component: Account },
   //   { path: '/admin', component: AdminDashboard },
   
   // // admin
