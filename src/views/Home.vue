@@ -9,12 +9,12 @@
       <!-- 小人 -->
       <div class="runner" ref="runner"></div>
       <!-- 内容 -->
-      <div class="hero-text" :class="{ show: showSupport }">
+      <div class="hero-text" :class="{ show: showSupport }" >
         <h1 class="fw-bold">Mindhaven</h1>
         <p class="lead" >Get support now</p>
         <router-link to="/support"><button class="btn btn-dark">Go</button></router-link>
       </div>
-       <!-- 恶魔（固定在跑道上的一个位置） -->
+       <!-- 恶魔 图片改天使了但是我懒得换了后面都是demo -->
       <div class="demon" :class="{ show: showDemon }" ref="demon"></div>
       <!-- 恶魔台词气泡 -->
       <div class="speech" :class="{ show: showDemon }" ref="speech">
@@ -64,6 +64,14 @@
           </div>
         </div>
     </section>
+
+        <!-- 返回顶部按钮 -->
+    <button 
+      v-show="showButton" 
+      class="btn btn-primary back-to-top" 
+      @click="scrollToTop">
+      <i class="iconfont icon-arrowup"></i>
+    </button>
   </div>
 </template>
 
@@ -82,34 +90,37 @@ export default {
       // 恶魔相关
       showDemon: false,
       demonLine: "",
+       showButton: false
     };
   },
 
 mounted() {
     const runner = this.$refs.runner;
     const background = this.$refs.background;
-  const demon = this.$refs.demon;
+    const demon = this.$refs.demon;
        if (demon) {
       demon.style.backgroundImage   = `url(${demonUrl})`;
       demon.style.backgroundSize    = 'contain';
       demon.style.backgroundRepeat  = 'no-repeat';
       demon.style.backgroundPosition= 'center';
     }
-  const speech = this.$refs.speech;
-
+    const speech = this.$refs.speech;
+ 
    // 两次出现的时间窗口（进度区间）与位置（相对跑道宽度 0~1）。时间区间只是告诉“出现多久”，pos 决定“出现在哪里”
-  const ENCOUNTER1 = { start: 0.04, end: 0.23, pos: 0.27 };
-  const ENCOUNTER2 = { start: 0.30, end: 0.51, pos: 0.55 };
+    const ENCOUNTER1 = { start: 0.04, end: 0.23, pos: 0.27 };
+    const ENCOUNTER2 = { start: 0.30, end: 0.51, pos: 0.55 };
 
   // 每次出现要说的话（会按区间进度切换到下一句）
-  const demonScript1 = [
+    const demonScript1 = [
     "Do you feel like no one really understands you?",
     "Do you feel lonely?"
-  ];
-  const demonScript2 = [
+    ];
+    const demonScript2 = [
     "You don't have to bear those emotions alone.",
     "Try telling us."
   ];
+  //scroll to top
+window.addEventListener("scroll", this.handleScroll);
 // document.body.scrollHeight → 页面内容的总高度。
 // window.innerHeight → 浏览器窗口高度。
 // maxScroll = 最大可滚动距离。
@@ -119,13 +130,13 @@ mounted() {
       const maxScroll = document.body.scrollHeight - window.innerHeight;//内容高度减去窗口高度
       const progress = window.scrollY / maxScroll; // 0 ~ 1
 
-      // 🏃 小人横向移动
+      // 小人横向移动
       const stopProgress = 0.72;
   const trackWidth = window.innerWidth - 100;
   const runnerProgress = Math.min(progress, stopProgress); // 小人只走到0.72
   runner.style.left = `${runnerProgress * trackWidth}px`;
 
-      // 🎞️ 小人帧动画（20 帧）
+      //小人帧动画（20 帧）
       const totalFrames = 20;
       const frameWidth = 100;
       const frameIndex = Math.floor(progress * totalFrames);
@@ -181,9 +192,24 @@ mounted() {
       speech.style.bottom = `calc(${demonBottom}px + ${demonHeight + 12}px)`;
       this.showDemon = show;
       if (show) this.demonLine = line;
+      
     }
   });
-}
+  },
+  beforeUnmount() {
+    window.removeEventListener("scroll", this.handleScroll);
+  },
+  methods: {
+    handleScroll() {
+      this.showButton = window.scrollY > 5000; // 滚动超过 5000px 才显示按钮
+    },
+    scrollToTop() {
+      window.scrollTo({
+        top: 5000,           // 纵向滚动到 500px 高度
+        behavior: "smooth"  // 平滑滚动
+      });
+    }
+  }
 };
       
 
@@ -234,7 +260,7 @@ mounted() {
 
 .runner {
   position: absolute;
-  bottom:  clamp(60px, 70vh, 100px);
+  bottom:  clamp(60px, 14vh, 150px);
   left: 0;
   width: 100px;
   height: 100px;
@@ -302,6 +328,39 @@ mounted() {
 }
 .hero-text.show {
   opacity: 1;
+}
+
+.back-to-top {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #4facfe, #00f2fe); /* 蓝色渐变 */
+  color: white;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  opacity: 0.85;
+}
+
+/* 悬浮效果 */
+.back-to-top:hover {
+  transform: scale(1.1);
+  opacity: 1;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+}
+
+/* 出现/消失的过渡 */
+.back-to-top {
+  transition: opacity 0.4s, transform 0.3s;
 }
 
 

@@ -43,6 +43,24 @@
         </div>
       </form>
     </div>
+
+    <!-- 注册成功提示  -->
+        <div 
+        class="toast show align-items-center text-bg-success border-0 position-fixed bottom-0 end-0 m-3"
+        role="alert"
+        v-if="showSuccess"
+        >
+        <div class="d-flex">
+            <div class="toast-body fs-5 fw-bold text-center">
+            🎉 register successful！please login
+            </div>
+            <button 
+            type="button" 
+            class="btn-close btn-close-white me-2 m-auto" 
+            @click="showSuccess = false">
+            </button>
+        </div>
+        </div>
   </div>
 </template>
 
@@ -59,7 +77,8 @@ export default {
             password: "",
             confirmPassword: "",
             errors: {},
-            formError: ""
+            formError: "",
+            showSuccess: false 
         };
     },
     methods: {
@@ -100,8 +119,14 @@ export default {
                     createdAt: new Date()  // 注册时间
                 });
 
-                // 注册成功，跳转登录页
+                // 注册成功 → 显示sucess
+                this.showSuccess = true;
+
+                // 2秒后跳转到登录页
+                setTimeout(() => {
                 this.$router.push("/login");
+                }, 2000);
+
             } catch (err) {
                 if (err.code === "auth/email-already-in-use") {
                     this.formError = "This email is already registered.";
