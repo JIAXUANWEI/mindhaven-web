@@ -157,6 +157,11 @@ button {
   font-weight: bold;
 }
 
+.btn-primary {
+  background-color: #FF8C00 !important;  /* 你想要的按钮颜色 */
+  border-color: #FF8C00 !important;
+}
+
 .form-label {
   display: block;
   text-align: left;

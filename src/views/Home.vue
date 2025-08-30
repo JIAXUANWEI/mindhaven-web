@@ -5,13 +5,14 @@
     <div class="track">
       <!-- 背景 -->
       <div class="background" ref="background"></div>
+      <!-- <div class="bg-art-text">stay with us</div> -->
       <!-- 小人 -->
       <div class="runner" ref="runner"></div>
       <!-- 内容 -->
       <div class="hero-text" :class="{ show: showSupport }">
         <h1 class="fw-bold">Mindhaven</h1>
         <p class="lead" >Get support now</p>
-        <button class="btn btn-dark">Go</button>
+        <router-link to="/support"><button class="btn btn-dark">Go</button></router-link>
       </div>
        <!-- 恶魔（固定在跑道上的一个位置） -->
       <div class="demon" :class="{ show: showDemon }" ref="demon"></div>
@@ -97,8 +98,8 @@ mounted() {
   const speech = this.$refs.speech;
 
    // 两次出现的时间窗口（进度区间）与位置（相对跑道宽度 0~1）。时间区间只是告诉“出现多久”，pos 决定“出现在哪里”
-  const ENCOUNTER1 = { start: 0.06, end: 0.20, pos: 0.25 };
-  const ENCOUNTER2 = { start: 0.35, end: 0.48, pos: 0.53 };
+  const ENCOUNTER1 = { start: 0.04, end: 0.23, pos: 0.27 };
+  const ENCOUNTER2 = { start: 0.30, end: 0.51, pos: 0.55 };
 
   // 每次出现要说的话（会按区间进度切换到下一句）
   const demonScript1 = [
@@ -215,9 +216,25 @@ mounted() {
   z-index: 0;
 }
 
+.bg-art-text {
+  position: absolute;
+  top: 18%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Pacifico', cursive, 'Comic Sans MS', 'Arial', sans-serif;
+  font-size: 5rem;
+  color: #fff;
+  text-shadow: 4px 4px 16px rgba(0,0,0,0.25), 0 0 32px #ff9800;
+  letter-spacing: 4px;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+  opacity: 0.7;
+}
+
 .runner {
   position: absolute;
-  bottom:  clamp(100px, 95vh, 125px);
+  bottom:  clamp(60px, 70vh, 100px);
   left: 0;
   width: 100px;
   height: 100px;
@@ -242,17 +259,37 @@ mounted() {
   bottom: calc(clamp(70px, 85vh, 100px) + 110px);
   transform: translateX(-50%);
   max-width: min(60ch, 42vw);
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: rgba(0,0,0,.7);
-  color: #fff;
-  line-height: 1.5;
+  padding: 16px 22px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #9370DB 60%, #fff3e0 100%);
+  color: #222;
+  font-size: 1.15rem;
+  font-family: 'Segoe UI', 'Arial', sans-serif;
+  line-height: 1.6;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18), 0 1.5px 0 #fff inset;
   opacity: 0;
   pointer-events: none;
   transition: opacity .3s ease;
   z-index: 3;
+  border: 2px solid #fff3e0;
 }
-.speech.show{opacity:1}
+
+/* 三角箭头 */
+.speech::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -18px;
+  transform: translateX(-50%);
+  border-width: 12px 14px 0 14px;
+  border-style: solid;
+  border-color: #9370DB transparent transparent transparent;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.10));
+}
+
+.speech.show {
+  opacity: 1;
+}
 
 .hero-text {
   position: absolute;
@@ -267,12 +304,6 @@ mounted() {
   opacity: 1;
 }
 
-.hero-text .lead {
-  opacity: 0;
-  transition: opacity 1s ease;
-}
-.hero-text .lead.show {
-  opacity: 1;
-}
+
 </style>
 

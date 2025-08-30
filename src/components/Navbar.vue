@@ -1,5 +1,5 @@
 <template>
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
     <div class="container">
       <router-link class="navbar-brand fw-bold" to="/">MindHaven</router-link>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -17,3 +17,26 @@
     </div>
   </nav>
 </template>
+
+<style scoped>
+.navbar-brand {
+  color:#fff !important;
+  font-size: 2rem; /* 增大品牌字体 */
+  font-family: 'Pacifico', cursive, 'Comic Sans MS', 'Arial', sans-serif; /* 艺术字字体 */
+  letter-spacing: 2px;
+  text-shadow: 2px 2px 8px rgba(0,0,0,0.2); /* 艺术字阴影 */
+}
+.navbar {
+  background-color: transparent !important;
+}
+.nav-item .nav-link{
+  color:#fff !important;
+  font-size: 1.2rem; /* 增大导航项字体 */
+  font-family: 'Segoe UI', 'Arial', sans-serif;
+  letter-spacing: 1px;
+}
+.btn-dark{
+  font-size: 1.2rem;
+}
+
+</style>
