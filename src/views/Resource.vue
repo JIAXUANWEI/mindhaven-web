@@ -10,8 +10,8 @@
 </template>
 
 <script>
-import ResourceCard from '@/components/ResourceCard.vue'
-import programs from '@/assets/data/programs.json'
+import ResourceCard from '../components/ResourceCard.vue'
+import programs from '../assets/data/programs.json'
 
 export default {
   name: "ResourcesView",

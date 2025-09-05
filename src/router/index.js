@@ -5,11 +5,11 @@ import Home from '../views/Home.vue'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import Account from '../views/Account.vue'
-// import About from '../views/About.vue'
-// import Services from '../views/Services.vue'
-// import Resources from '../views/Resources.vue'
-// import Support from '../views/Support.vue'
-// import Wellbeing from '../views/Wellbeing.vue'
+import About from '../views/About.vue'
+import Services from '../views/Services.vue'
+import Resource from '../views/Resource.vue'
+import Support from '../views/Support.vue'
+import Wellbeing from '../views/Wellbeing.vue'
 
 
 // import AdminDashboard from '../views/AdminDashboard.vue'
@@ -21,11 +21,11 @@ const routes = [
   { path: '/', component: Home },
   { path: '/login', component: Login },
   { path: '/register', component: Register },
-  // { path: '/about', component: About },
-  // { path: '/services', component: Services },
-  // { path: '/resources', component: Resources },
-  // { path: '/support', component: Support },
-  // { path: '/wellbeing', component: Wellbeing },
+  { path: '/about', component: About },
+  { path: '/services', component: Services },
+  { path: '/resource', component: Resource },
+  { path: '/support', component: Support },
+  { path: '/wellbeing', component: Wellbeing },
   { path: '/account', component: Account },
   //   { path: '/admin', component: AdminDashboard },
   

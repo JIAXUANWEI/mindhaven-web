@@ -26,7 +26,7 @@
    </div>
 
     <!-- Listen to Others -->
-    <section class="container-fluid bg-light py-5 text-center">
+    <section class="container-fluid bg-dark-gray py-5 text-center">
         <h2 class="mb-4">LISTEN TO OTHERS</h2>
         <div class="row g-0" >
           <div class="col-md-4" v-for="n in 3" :key="n">
@@ -41,7 +41,7 @@
     </section>
 
     <!-- Learn by Resources -->
-    <section class="container-fluid py-5 d-flex align-items-center">
+    <section class="container-fluid bg-dark-gray py-5 d-flex align-items-center">
       <img src="https://via.placeholder.com/250x150" class="img-fluid me-4" />
       <div>
         <h2>LEARN BY RESOURCES</h2>
@@ -50,7 +50,7 @@
     </section>
 
     <!-- Get Support -->
-    <section class="container-fluid bg-light py-5 text-center">
+    <section class="container-fluid bg-dark-gray py-5 text-center">
         <h2 class="mb-4">GET SUPPORT FROM PROFESSIONALS</h2>
         <div class="row g-4">
           <div class="col-md-4" v-for="(support, i) in supports" :key="i">
@@ -146,7 +146,7 @@ window.addEventListener("scroll", this.handleScroll);
       const bgProgress = Math.min(progress, stopProgress);
       background.style.backgroundPositionX = `${bgProgress * 100}%`;
       // 显示网站名字
-      this.showSupport = progress > 0.65;
+      this.showSupport = progress > 0.65 && progress < 0.82;
 
 // 5.1 计算恶魔宽度（用于居中与气泡偏移）
     const demonW = demon?.offsetWidth || 120;
@@ -363,6 +363,35 @@ window.addEventListener("scroll", this.handleScroll);
   transition: opacity 0.4s, transform 0.3s;
 }
 
+/* 温暖深蓝紫背景 - 与背景图完美融合 */
+.bg-dark-gray {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%) !important;
+  color: #ffffff;
+}
+
+/* 新背景下的卡片样式调整 */
+.bg-dark-gray .card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.bg-dark-gray .card-body {
+  color: #ffffff;
+}
+
+.bg-dark-gray h2,
+.bg-dark-gray h5 {
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.bg-dark-gray p {
+  color: #e8f4fd;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
 
 </style>
 
