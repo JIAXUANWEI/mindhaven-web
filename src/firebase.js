@@ -2,19 +2,22 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";  
 
+
+// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyCCi0cW7rMnADIOmOdUL1fKDvUn2YMHXTw",
-  authDomain: "mindhaven-web-4bd8f.firebaseapp.com",
-  projectId: "mindhaven-web-4bd8f",
-  storageBucket: "mindhaven-web-4bd8f.firebasestorage.app",
-  messagingSenderId: "821693510080",
-  appId: "1:821693510080:web:95e6d6674ff53fc8161825",
-  measurementId: "G-WQH0JTY3QJ"
+  apiKey: "AIzaSyD1KRMnbioqe4N-W3L3hFG5HrObcyBk15s",
+  authDomain: "fit5032-mindhaven-web.firebaseapp.com",
+  projectId: "fit5032-mindhaven-web",
+  storageBucket: "fit5032-mindhaven-web.firebasestorage.app",
+  messagingSenderId: "838632980183",
+  appId: "1:838632980183:web:e555831e12966933c2ba92"
 };
 
-// 初始化 Firebase
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// 导出 auth 对象
-export const auth = getAuth(app);       //导出 auth
-export const db = getFirestore(app);    // 导出 db
+// 导出 auth、db 对象
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+
+

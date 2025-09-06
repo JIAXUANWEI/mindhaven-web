@@ -28,16 +28,18 @@
     <!-- Listen to Others -->
     <section class="container-fluid bg-dark-gray py-5 text-center">
         <h2 class="mb-4">LISTEN TO OTHERS</h2>
-        <div class="row g-0" >
-          <div class="col-md-4" v-for="n in 3" :key="n">
-            <div class="card h-100 shadow-sm">
-              <img src="https://via.placeholder.com/150" class="card-img-top rounded-circle p-3" />
-              <div class="card-body">
-                <p class="card-text">Story preview text here...</p>
+        <div v-if="loadingStories" class="text-center py-5">Loading…</div>
+            <div v-else-if="storiesError" class="alert alert-danger">{{ storiesError }}</div>
+            <!-- 故事卡片 -->
+            <div v-else class="row g-4 justify-content-center px-3">
+              <div class="col-md-4" v-for="s in featuredStories" :key="s.id">
+                <StoryCard :story="s" />
               </div>
             </div>
-          </div>
-        </div>
+
+            <router-link to="/stories" class="btn btn-light btn-lg mt-4 px-4 py-2">
+              View All Stories
+            </router-link>
     </section>
 
     <!-- Learn by Resources -->
@@ -77,8 +79,11 @@
 
 <script>
 import demonUrl from '../assets/demon.png' 
+import StoryCard from "../components/StoryCard.vue";
+import { fetchFeaturedStories } from "../services/stories";
 export default {
   name: "HomeView",
+  components: { StoryCard },
   data() {
     return {
       supports: [
@@ -90,11 +95,15 @@ export default {
       // 恶魔相关
       showDemon: false,
       demonLine: "",
-       showButton: false
+      showButton: false,
+      // 故事相关
+      featuredStories: [],
+      loadingStories: true,
+      storiesError: ""
     };
   },
 
-mounted() {
+async mounted() {
     const runner = this.$refs.runner;
     const background = this.$refs.background;
     const demon = this.$refs.demon;
@@ -106,11 +115,11 @@ mounted() {
     }
     const speech = this.$refs.speech;
  
-   // 两次出现的时间窗口（进度区间）与位置（相对跑道宽度 0~1）。时间区间只是告诉“出现多久”，pos 决定“出现在哪里”
+    // 两次出现的时间窗口（进度区间）与位置（相对跑道宽度 0~1）。时间区间只是告诉“出现多久”，pos 决定“出现在哪里”
     const ENCOUNTER1 = { start: 0.04, end: 0.23, pos: 0.27 };
     const ENCOUNTER2 = { start: 0.30, end: 0.51, pos: 0.55 };
 
-  // 每次出现要说的话（会按区间进度切换到下一句）
+    // 每次出现要说的话（会按区间进度切换到下一句）
     const demonScript1 = [
     "Do you feel like no one really understands you?",
     "Do you feel lonely?"
@@ -119,22 +128,22 @@ mounted() {
     "You don't have to bear those emotions alone.",
     "Try telling us."
   ];
-  //scroll to top
-window.addEventListener("scroll", this.handleScroll);
-// document.body.scrollHeight → 页面内容的总高度。
-// window.innerHeight → 浏览器窗口高度。
-// maxScroll = 最大可滚动距离。
-// window.scrollY → 当前已经滚动的像素。
-// progress = 已滚动 / 可滚动总长 → 得到一个 0~1 的比例。
+    //scroll to top
+    window.addEventListener("scroll", this.handleScroll);
+    // document.body.scrollHeight → 页面内容的总高度。
+    // window.innerHeight → 浏览器窗口高度。
+    // maxScroll = 最大可滚动距离。
+    // window.scrollY → 当前已经滚动的像素。
+    // progress = 已滚动 / 可滚动总长 → 得到一个 0~1 的比例。
     window.addEventListener("scroll", () => {
       const maxScroll = document.body.scrollHeight - window.innerHeight;//内容高度减去窗口高度
       const progress = window.scrollY / maxScroll; // 0 ~ 1
 
       // 小人横向移动
       const stopProgress = 0.72;
-  const trackWidth = window.innerWidth - 100;
-  const runnerProgress = Math.min(progress, stopProgress); // 小人只走到0.72
-  runner.style.left = `${runnerProgress * trackWidth}px`;
+      const trackWidth = window.innerWidth - 100;
+      const runnerProgress = Math.min(progress, stopProgress); // 小人只走到0.72
+      runner.style.left = `${runnerProgress * trackWidth}px`;
 
       //小人帧动画（20 帧）
       const totalFrames = 20;
@@ -148,57 +157,70 @@ window.addEventListener("scroll", this.handleScroll);
       // 显示网站名字
       this.showSupport = progress > 0.65 && progress < 0.82;
 
-// 5.1 计算恶魔宽度（用于居中与气泡偏移）
-    const demonW = demon?.offsetWidth || 120;
-    // 工具函数
-    const inWin = (p, w) => p >= w.start && p < w.end;// 判断当前进度是否在恶魔出现的区间内
-    const localT = (p, w) => (p - w.start) / (w.end - w.start); // 0~1
+      // 计算恶魔宽度（用于居中与气泡偏移）
+      const demonW = demon?.offsetWidth || 120;
+      // 工具函数
+      const inWin = (p, w) => p >= w.start && p < w.end;// 判断当前进度是否在恶魔出现的区间内
+      const localT = (p, w) => (p - w.start) / (w.end - w.start); // 0~1
       const pickLine = (t, lines) => lines[Math.min(lines.length - 1, Math.floor(t * lines.length))];
       //t * lines.length → 根据进度算出应该在哪一句。Math.floor() → 向下取整，得到当前台词索引。Math.min() → 防止越界（最后一句保持）。
 
-    let show = false;// 是否显示恶魔
-    let leftPx = null; // 恶魔的水平坐标
-    let line = "";// 当前显示的台词
+      let show = false;// 是否显示恶魔
+      let leftPx = null; // 恶魔的水平坐标
+      let line = "";// 当前显示的台词
 
-    if (inWin(progress, ENCOUNTER1)) {
-      const t = localT(progress, ENCOUNTER1);//恶魔在第一次出现区间内的进度 0~1
-      show = true;
-      leftPx = ENCOUNTER1.pos * (window.innerWidth - demonW);
-      line = pickLine(t, demonScript1);
-    } else if (inWin(progress, ENCOUNTER2)) {
-      const t = localT(progress, ENCOUNTER2);
-      show = true;
-      leftPx = ENCOUNTER2.pos * (window.innerWidth - demonW);
-      line = pickLine(t, demonScript2);
-    }
-
-    if (demon) {
-      // 固定在“地面”线上，水平位置按当前出现段设置
-      if (leftPx !== null) demon.style.left = `${leftPx}px`;
-      // 通过 opacity 实现淡入淡出
-      demon.style.opacity = show ? "1" : "0";
-    }
-    if (speech && demon) {
-      // 气泡居中在恶魔上方
-      if (leftPx !== null) {
-        // 恶魔的中心点
-        const demonCenter = leftPx + demonW / 2;
-        speech.style.left = `${demonCenter}px`;
+      if (inWin(progress, ENCOUNTER1)) {
+        const t = localT(progress, ENCOUNTER1);//恶魔在第一次出现区间内的进度 0~1
+        show = true;
+        leftPx = ENCOUNTER1.pos * (window.innerWidth - demonW);
+        line = pickLine(t, demonScript1);
+      } else if (inWin(progress, ENCOUNTER2)) {
+        const t = localT(progress, ENCOUNTER2);
+        show = true;
+        leftPx = ENCOUNTER2.pos * (window.innerWidth - demonW);
+        line = pickLine(t, demonScript2);
       }
-      // 气泡底部紧贴恶魔顶部
-      const demonBottom = parseFloat(getComputedStyle(demon).bottom) || 0;
-      const demonHeight = demon.offsetHeight || 120;
-      // 气泡底部 = 恶魔底部 + 恶魔高度 + 间距
-      speech.style.bottom = `calc(${demonBottom}px + ${demonHeight + 12}px)`;
-      this.showDemon = show;
-      if (show) this.demonLine = line;
-      
+
+      if (demon) {
+        // 固定在“地面”线上，水平位置按当前出现段设置
+        if (leftPx !== null) demon.style.left = `${leftPx}px`;
+        // 通过 opacity 实现淡入淡出
+        demon.style.opacity = show ? "1" : "0";
+      }
+      if (speech && demon) {
+        // 气泡居中在恶魔上方
+        if (leftPx !== null) {
+          // 恶魔的中心点
+          const demonCenter = leftPx + demonW / 2;
+          speech.style.left = `${demonCenter}px`;
+        }
+        // 气泡底部紧贴恶魔顶部
+        const demonBottom = parseFloat(getComputedStyle(demon).bottom) || 0;
+        const demonHeight = demon.offsetHeight || 120;
+        // 气泡底部 = 恶魔底部 + 恶魔高度 + 间距
+        speech.style.bottom = `calc(${demonBottom}px + ${demonHeight + 12}px)`;
+        this.showDemon = show;
+        if (show) this.demonLine = line;
+        
+      }
+    });
+
+    try {
+      this.featuredStories = await fetchFeaturedStories({ size: 3 });
+      this.storiesError = "";
+    } catch (e) {
+      console.error(e);
+      this.storiesError = "Failed to load stories.";
+    } finally {
+      this.loadingStories = false;
     }
-  });
+    
   },
+  
   beforeUnmount() {
     window.removeEventListener("scroll", this.handleScroll);
   },
+  // 返回顶部按钮相关
   methods: {
     handleScroll() {
       this.showButton = window.scrollY > 5000; // 滚动超过 5000px 才显示按钮
@@ -210,6 +232,7 @@ window.addEventListener("scroll", this.handleScroll);
       });
     }
   }
+
 };
       
 

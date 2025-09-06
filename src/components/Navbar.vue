@@ -22,7 +22,7 @@
               <li><router-link class="dropdown-item" to="/services" @click="hideDropdown('services')">All Services</router-link></li>
               <li><router-link class="dropdown-item" to="/services#professionals" @click="hideDropdown('services')">Get support from professionals</router-link></li>
               <li><router-link class="dropdown-item" to="/services#resource" @click="hideDropdown('services')">Learn by resource</router-link></li>
-              <li><router-link class="dropdown-item" to="/services#Listen" @click="hideDropdown('services')">Listen to others</router-link></li>
+              <li><router-link class="dropdown-item" to="/stories" @click="hideDropdown('services')">Listen to others</router-link></li>
             </ul>
           </li>
 

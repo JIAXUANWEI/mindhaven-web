@@ -105,6 +105,34 @@
         </div>
       </div>
     </section>
+
+    <!-- Listen to Others CTA -->
+    <section id="Listen" class="py-5">
+      <div class="container">
+        <div class="row align-items-center">
+          <div class="col-lg-7">
+            <h2 class="mb-3">Listen to Others</h2>
+            <p class="lead">Read real stories shared by people on their wellbeing journey.</p>
+            <p class="text-muted">Gain perspective, feel connected, and find strength from others' experiences.</p>
+            <router-link to="/stories" class="btn btn-primary btn-lg mt-2">
+              Go to Stories
+            </router-link>
+          </div>
+          <div class="col-lg-5 mt-4 mt-lg-0">
+            <div class="card shadow-sm">
+              <div class="card-body">
+                <h5 class="card-title mb-2">What you'll find</h5>
+                <ul class="mb-0">
+                  <li class="mb-1">Personal journeys and coping strategies</li>
+                  <li class="mb-1">Insights on stress, anxiety, and balance</li>
+                  <li class="mb-1">Encouragement and practical tips</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -163,7 +191,7 @@ export default {
 
 <style scoped>
 .services-page {
-  padding-top: 80px; /* Account for fixed navbar */
+  padding-top: 0; /* Remove extra white space at the top */
 }
 
 .hero-section {
@@ -171,6 +199,7 @@ export default {
   min-height: 100vh;
   display: flex;
   align-items: center;
+  padding-top: 80px; /* Keep content clear of fixed navbar without creating a gap */
 }
 
 .service-card {
