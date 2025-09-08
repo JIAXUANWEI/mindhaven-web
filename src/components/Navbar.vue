@@ -21,13 +21,13 @@
             <ul class="dropdown-menu" :class="{ show: activeDropdown === 'services' }" @keydown.esc="hideDropdown('services')">
               <li><router-link class="dropdown-item" to="/services" @click="hideDropdown('services')">All Services</router-link></li>
               <li><router-link class="dropdown-item" to="/services#professionals" @click="hideDropdown('services')">Get support from professionals</router-link></li>
-              <li><router-link class="dropdown-item" to="/services#resource" @click="hideDropdown('services')">Learn by resource</router-link></li>
+              <li><router-link class="dropdown-item" to="/resources" @click="hideDropdown('services')">Learn by resource</router-link></li>
               <li><router-link class="dropdown-item" to="/stories" @click="hideDropdown('services')">Listen to others</router-link></li>
             </ul>
           </li>
 
-          <!-- Wellbeing 下拉菜单 -->
-          <li class="nav-item dropdown" @mouseenter="showDropdown('wellbeing')" @mouseleave="hideDropdown('wellbeing')">
+          <!-- Wellbeing 下拉菜单 (暂时禁用，等待实现) -->
+          <!-- <li class="nav-item dropdown" @mouseenter="showDropdown('wellbeing')" @mouseleave="hideDropdown('wellbeing')">
             <a class="nav-link dropdown-toggle" href="#" role="button" @click.prevent="toggleDropdown('wellbeing')" @keydown.enter="toggleDropdown('wellbeing')">
               My Wellbeing
             </a>
@@ -35,23 +35,84 @@
               <li><router-link class="dropdown-item" to="/wellbeing" @click="hideDropdown('wellbeing')">Self Assessment</router-link></li>
               <li><router-link class="dropdown-item" to="/wellbeing#tracking" @click="hideDropdown('wellbeing')">Mood Tracking</router-link></li>
             </ul>
+          </li> -->
+
+          <!-- Admin 下拉菜单 (仅管理员可见) -->
+          <li v-if="isAdmin" class="nav-item dropdown" @mouseenter="showDropdown('admin')" @mouseleave="hideDropdown('admin')">
+            <a class="nav-link dropdown-toggle" href="#" role="button" @click.prevent="toggleDropdown('admin')" @keydown.enter="toggleDropdown('admin')">
+              Admin
+            </a>
+            <ul class="dropdown-menu" :class="{ show: activeDropdown === 'admin' }" @keydown.esc="hideDropdown('admin')">
+              <li><router-link class="dropdown-item" to="/admin" @click="hideDropdown('admin')">Dashboard</router-link></li>
+              <li><router-link class="dropdown-item" to="/admin/resources" @click="hideDropdown('admin')">Manage Resources</router-link></li>
+            </ul>
           </li>
         </ul>
-        <router-link class="btn btn-dark ms-3" to="/login">Login</router-link>
+        
+        <!-- 登录/用户状态 -->
+        <div v-if="!isLoggedIn" class="d-flex">
+          <router-link class="btn btn-dark me-2" to="/login">Login</router-link>
+          <router-link class="btn btn-outline-light" to="/register">Register</router-link>
+        </div>
+        <div v-else class="d-flex align-items-center">
+          <span class="text-white me-3">Welcome, {{ userEmail }}</span>
+          <button @click="logout" class="btn btn-outline-light">Logout</button>
+        </div>
       </div>
     </div>
   </nav>
 </template>
 
 <script>
+import { auth } from '../firebase.js';
+import { signOut } from 'firebase/auth';
+
 export default {
   name: 'Navbar',
   data() {
     return {
-      activeDropdown: null
+      activeDropdown: null,
+      isLoggedIn: false,
+      userEmail: '',
+      isAdmin: false
     }
   },
+  mounted() {
+    this.checkAuthStatus();
+    // 监听认证状态变化
+    auth.onAuthStateChanged((user) => {
+      this.isLoggedIn = !!user;
+      if (user) {
+        this.userEmail = user.email;
+        this.checkUserRole();
+      } else {
+        this.userEmail = '';
+        this.isAdmin = false;
+      }
+    });
+  },
   methods: {
+    checkAuthStatus() {
+      const user = auth.currentUser;
+      this.isLoggedIn = !!user;
+      if (user) {
+        this.userEmail = user.email;
+        this.checkUserRole();
+      }
+    },
+    checkUserRole() {
+      const userData = JSON.parse(localStorage.getItem("currentUser") || "{}");
+      this.isAdmin = userData.role === "admin";
+    },
+    async logout() {
+      try {
+        await signOut(auth);
+        localStorage.removeItem("currentUser");
+        this.$router.push("/");
+      } catch (error) {
+        console.error("Logout error:", error);
+      }
+    },
     showDropdown(dropdownName) {
       this.activeDropdown = dropdownName;
     },

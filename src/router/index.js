@@ -9,13 +9,14 @@ import About from '../views/About.vue'
 import Services from '../views/Services.vue'
 import StoriesList from "../views/StoryList.vue";
 import StoryDetail from "../components/StoryDetail.vue";
-// import Resources from '../views/Resources.vue'
+import ResourceList from '../views/ResourceList.vue'
+import ResourceDetail from '../components/ResourceDetail.vue'
+import AdminDashboard from '../views/AdminDashboard.vue'
+import AdminResources from '../views/AdminResources.vue'
 // import Support from '../views/Support.vue'
 // import Wellbeing from '../views/Wellbeing.vue'
 
 
-// import AdminDashboard from '../views/AdminDashboard.vue'
-// import AdminResources from '../views/AdminResources.vue'
 // import AdminAnalytics from '../views/AdminAnalytics.vue'
 // import AdminAccount from '../views/AdminAccount.vue'
 
@@ -27,17 +28,15 @@ const routes = [
   { path: '/services', component: Services },
   { path: '/stories', name: 'stories', component: StoriesList },
   { path: '/stories/:id', name: 'storyDetail', component: StoryDetail, props: true },
-  // { path: '/resources', component: Resources },
+  { path: '/resources', name: 'resources', component: ResourceList },
+  { path: '/resources/:id', name: 'resourceDetail', component: ResourceDetail, props: true },
   // { path: '/support', component: Support },
   // { path: '/wellbeing', component: Wellbeing },
   { path: '/account', component: Account },
-  //   { path: '/admin', component: AdminDashboard },
   
-  // // admin
-  // { path: '/admin', component: AdminDashboard },
-  // { path: '/admin/resources', component: AdminResources },
-  // { path: '/admin/analytics', component: AdminAnalytics },
-  // { path: '/admin/account', component: AdminAccount }
+  // Admin routes
+  { path: '/admin', name: 'adminDashboard', component: AdminDashboard, meta: { requiresAuth: true, requiresAdmin: true } },
+  { path: '/admin/resources', name: 'adminResources', component: AdminResources, meta: { requiresAuth: true, requiresAdmin: true } }
 ]
 
 
@@ -48,11 +47,29 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const currentUser = auth.currentUser;
+  
+  // Check if route requires authentication
+  if (to.meta.requiresAuth && !currentUser) {
+    next("/login");
+    return;
+  }
+  
+  // Check if route requires admin role
+  if (to.meta.requiresAdmin) {
+    const userData = JSON.parse(localStorage.getItem("currentUser") || "{}");
+    if (userData.role !== "admin") {
+      next("/account"); // Redirect to account page if not admin
+      return;
+    }
+  }
+  
+  // Legacy check for account page
   if (to.path === "/account" && !currentUser) {
     next("/login");
-  } else {
-    next();
+    return;
   }
+  
+  next();
 });
 
 export default router

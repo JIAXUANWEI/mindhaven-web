@@ -1,31 +1,36 @@
+<!-- authorName
+content
+createdAt
+excerpt
+avatarUrl
+coverUrl
+status -->
 <template>
   <div class="story-detail-page">
     <!-- Hero Section with Cover Image -->
+     <!-- 用story对象是否存在来决定是否显示。动态绑定内联样式：根据 story.coverUrl 是否存在，设置背景图片；否则使用渐变背景。 -->
     <section v-if="story" class="story-hero" :style="{ 
       backgroundImage: story.coverUrl ? `url(${story.coverUrl})` : 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
       backgroundSize: 'cover',
       backgroundPosition: 'center center',
       backgroundRepeat: 'no-repeat',
-      paddingTop: '150px',
-      paddingBottom: '80px'
     }">
-      <div class="hero-overlay">
-        <div class="container">
+
+        <div class="container text-center text-white">
           <div class="row">
-            <div class="col-lg-8 mx-auto text-center">
-              <h1 class="display-4 fw-bold text-white mb-4 text-shadow">{{ story.title }}</h1>
+            <div class="col-lg-8 mx-auto">
+              <h1 class="display-4 fw-bold mb-4 text-shadow">{{ story.title }}</h1>
               <div class="d-flex align-items-center justify-content-center mb-4">
                 <img v-if="story.avatarUrl" :src="story.avatarUrl" class="rounded-circle me-3" style="width:50px;height:50px;object-fit:cover;" />
-                <div class="text-white">
+                <div>
                   <div class="fw-semibold">{{ story.authorName || 'Anonymous' }}</div>
                   <small class="opacity-75">{{ dateText }}</small>
                 </div>
               </div>
-              <p v-if="story.excerpt" class="lead text-white text-shadow">{{ story.excerpt }}</p>
+              <p v-if="story.excerpt" class="lead text-shadow">{{ story.excerpt }}</p>
             </div>
           </div>
         </div>
-      </div>
     </section>
 
     <!-- Story Content Section -->
@@ -57,9 +62,9 @@
         <div class="row">
           <div class="col-lg-8 mx-auto text-center py-5">
             <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-              <span class="visually-hidden">Loading...</span>
+              <span class="visually-hidden"><i class="iconfont icon-loading">Loading...</i></span>
             </div>
-            <p class="mt-3 text-muted">Loading story...</p>
+            <p class="mt-3 text-muted"><i class="iconfont icon-loading"></i>Loading story...</p>
           </div>
         </div>
       </div>
@@ -131,33 +136,18 @@ export default {
 }
 
 .story-hero {
-  min-height: 100vh !important;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%) !important;
-  background-size: cover !important;
-  background-position: center center !important;
-  background-repeat: no-repeat !important;
-  position: relative !important;
-  display: flex !important;
-  align-items: center !important;
-  overflow: hidden !important;
-  padding-top: 150px !important; /* Increase padding to ensure no overlap with navbar */
-  padding-bottom: 80px !important;
-}
-
-.hero-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(26, 26, 46, 0.6) 0%, rgba(22, 33, 62, 0.6) 50%, rgba(15, 52, 96, 0.6) 100%);
-  z-index: 1;
-}
-
-.hero-overlay .container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
   position: relative;
-  z-index: 2;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
 }
+
+
 
 .story-content {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
@@ -198,7 +188,7 @@ export default {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  background: linear-gradient(135deg, #CCCCCC, #666666);
   border: none;
   color: #ffffff;
   font-weight: 600;
@@ -209,7 +199,7 @@ export default {
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #00f2fe, #4facfe);
+  background: linear-gradient(135deg, #006699, #CCCCCC);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
   color: #ffffff;
@@ -246,40 +236,5 @@ export default {
   border-width: 0.3em;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .story-hero {
-    min-height: 60vh;
-    padding-top: 130px;
-    padding-bottom: 60px;
-  }
-  
-  .story-hero h1 {
-    font-size: 2.5rem;
-  }
-  
-  .story-body {
-    padding: 2rem 1.5rem;
-  }
-  
-  .content {
-    font-size: 1rem;
-    line-height: 1.6;
-  }
-}
 
-@media (max-width: 576px) {
-  .story-hero {
-    padding-top: 120px;
-    padding-bottom: 50px;
-  }
-  
-  .story-hero h1 {
-    font-size: 2rem;
-  }
-  
-  .story-body {
-    padding: 1.5rem 1rem;
-  }
-}
 </style>

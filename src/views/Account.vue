@@ -13,19 +13,34 @@
 </template>
 
 <script>
+import { auth } from '../firebase.js';
+import { signOut } from 'firebase/auth';
+
 export default {
   name: "AccountView",
   data() {
     return {
-      userEmail: localStorage.getItem("currentUserEmail") || "Guest",
-      userRole: localStorage.getItem("currentUserRole") || "user"
+      userEmail: "Guest",
+      userRole: "user"
     };
   },
+  mounted() {
+    this.loadUserData();
+  },
   methods: {
-    logout() {
-      localStorage.removeItem("currentUserEmail");
-      localStorage.removeItem("currentUserRole");
-      this.$router.push("/login");
+    loadUserData() {
+      const userData = JSON.parse(localStorage.getItem("currentUser") || "{}");
+      this.userEmail = userData.email || "Guest";
+      this.userRole = userData.role || "user";
+    },
+    async logout() {
+      try {
+        await signOut(auth);
+        localStorage.removeItem("currentUser");
+        this.$router.push("/login");
+      } catch (error) {
+        console.error("Logout error:", error);
+      }
     }
   }
 };

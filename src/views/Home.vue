@@ -43,13 +43,24 @@
     </section>
 
     <!-- Learn by Resources -->
-    <section class="container-fluid bg-dark-gray py-5 d-flex align-items-center">
-      <img src="https://via.placeholder.com/250x150" class="img-fluid me-4" />
-      <div>
-        <h2>LEARN BY RESOURCES</h2>
-        <p>Explore resources about mental health, wellbeing, and relationships.</p>
-      </div>
+
+        <section class="container-fluid bg-dark-gray py-5 text-center">
+        <h2 class="mb-4">LEARN BY RESOURCES</h2>
+        <div v-if="loadingResources" class="text-center py-5">Loading…</div>
+            <div v-else-if="resourcesError" class="alert alert-danger">{{ resourcesError }}</div>
+            <!-- 资源卡片 -->
+            <div v-else class="row g-4 justify-content-center px-3">
+              <div class="col-md-4" v-for="r in featuredResources" :key="r.id">
+                <ResourceCard :resource="r" />
+              </div>
+            </div>
+
+            <router-link to="/resources" class="btn btn-light btn-lg mt-4 px-4 py-2">
+              View All Resources
+            </router-link>
     </section>
+
+  
 
     <!-- Get Support -->
     <section class="container-fluid bg-dark-gray py-5 text-center">
@@ -80,10 +91,12 @@
 <script>
 import demonUrl from '../assets/demon.png' 
 import StoryCard from "../components/StoryCard.vue";
+import ResourceCard from "../components/ResourceCard.vue";
 import { fetchFeaturedStories } from "../services/stories";
+import { fetchFeaturedResources } from "../services/resources";
 export default {
   name: "HomeView",
-  components: { StoryCard },
+  components: { StoryCard, ResourceCard },
   data() {
     return {
       supports: [
@@ -99,7 +112,11 @@ export default {
       // 故事相关
       featuredStories: [],
       loadingStories: true,
-      storiesError: ""
+      storiesError: "",
+      // 资源相关
+      featuredResources: [],
+      loadingResources: true,
+      resourcesError: ""
     };
   },
 
@@ -213,6 +230,17 @@ async mounted() {
       this.storiesError = "Failed to load stories.";
     } finally {
       this.loadingStories = false;
+    }
+
+    // 加载精选资源
+    try {
+      this.featuredResources = await fetchFeaturedResources({ size: 3 });
+      this.resourcesError = "";
+    } catch (e) {
+      console.error(e);
+      this.resourcesError = "Failed to load resources.";
+    } finally {
+      this.loadingResources = false;
     }
     
   },
@@ -414,6 +442,34 @@ async mounted() {
 .bg-dark-gray p {
   color: #e8f4fd;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Learn by Resources 可点击区域样式 */
+.bg-dark-gray .text-decoration-none {
+  transition: all 0.3s ease;
+  display: block;
+}
+
+.bg-dark-gray .text-decoration-none:hover {
+  transform: translateY(-2px);
+}
+
+.bg-dark-gray .text-decoration-none:hover h2 {
+  color: #4facfe !important;
+  text-shadow: 0 2px 8px rgba(79, 172, 254, 0.3);
+}
+
+.bg-dark-gray .text-decoration-none:hover p {
+  color: #ffffff !important;
+}
+
+.bg-dark-gray .text-decoration-none:hover img {
+  transform: scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.bg-dark-gray .text-decoration-none img {
+  transition: all 0.3s ease;
 }
 
 </style>

@@ -69,7 +69,7 @@
 <script>
 import { auth, db } from "../firebase.js";
 import { signInWithEmailAndPassword } from "firebase/auth"; 
-import { doc, getDoc } from "firebase/firestore"; 
+import { doc, getDoc, setDoc } from "firebase/firestore"; 
 
 export default {
   name: "LoginView",
@@ -114,16 +114,37 @@ export default {
         let role = "user";
 
         //  如果你在 Firestore 里存了 role，就取出来
-        const docRef = doc(db, "users", user.uid);//创建一个指向 Firestore 文档的“引用 (Reference)”。db → Firestore 数据库对象。"users" → 集合名字（相当于数据库表）。user.uid → 这个用户的唯一 ID，作为文档 ID。
+        const docRef = doc(db, "users", user.uid);//创建一个指向 Firestore 文档的"引用 (Reference)"。db → Firestore 数据库对象。"users" → 集合名字（相当于数据库表）。user.uid → 这个用户的唯一 ID，作为文档 ID。
         const docSnap = await getDoc(docRef);
+        console.log("User UID:", user.uid);
+        console.log("Document exists:", docSnap.exists());
         if (docSnap.exists()) {
-          role = docSnap.data().role || "user";
+          const userData = docSnap.data();
+          console.log("User data from Firestore:", userData);
+          role = userData.role || "user";
+          console.log("Final role:", role);
+        } else {
+          console.log("No user document found in Firestore, creating new document...");
+          // 检查是否是管理员邮箱，如果是则创建管理员文档
+          const adminEmails = ["admin@example.com", "administrator@example.com"]; // 在这里添加您的管理员邮箱
+          if (adminEmails.includes(user.email)) {
+            role = "admin";
+            console.log("Admin email detected, setting role to admin");
+          }
+          
+          // 创建用户文档
+          await setDoc(docRef, {
+            email: user.email,
+            role: role,
+            createdAt: new Date()
+          });
+          console.log("User document created with role:", role);
         }
         //  把用户信息保存到浏览器本地存储
         localStorage.setItem("currentUser", JSON.stringify({ email: user.email, role }));//localStorage.setItem(key, value) → 存一条数据。JSON.stringify → 把对象转成字符串，方便存储。
 
         //  跳转
-        this.$router.push(role === "admin" ? "/admin" : "/account");
+        this.$router.push(role === "admin" ? "/admin" : "/");
 
       } catch (err) {
         this.formError = "Invalid email or password";
