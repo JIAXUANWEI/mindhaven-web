@@ -1,24 +1,14 @@
 <template>
   <div class="admin-resources-page">
     <!-- Header -->
-    <div class="admin-header">
-      <div class="container">
-        <div class="row align-items-center">
-          <div class="col-md-6">
-            <h1 class="display-5 fw-bold text-white mb-0">Resource Management</h1>
-            <p class="text-white-50 mb-0">Manage your learning resources</p>
-          </div>
-          <div class="col-md-6 text-end">
-            <button @click="showCreateModal = true" class="btn btn-primary btn-lg">
-              <i class="fas fa-plus me-2"></i>Add New Resource
-            </button>
-          </div>
-        </div>
-      </div>
+    <div class="AdminResources-hero d-flex align-items-center">
     </div>
 
     <!-- Resources Table -->
     <div class="container py-5">
+      <button @click="showCreateModal = true" class="btn btn-primary btn-lg">
+        <i class="iconfont icon-add">Add New Resource</i>
+      </button>
       <div class="admin-card">
         <div class="table-responsive">
           <table class="table table-hover">
@@ -69,10 +59,10 @@
                 <td>
                   <div class="btn-group" role="group">
                     <button @click="editResource(resource)" class="btn btn-sm btn-outline-primary">
-                      <i class="fas fa-edit"></i>
+                      <i class="iconfont icon-edit"></i>
                     </button>
                     <button @click="deleteResource(resource.id)" class="btn btn-sm btn-outline-danger">
-                      <i class="fas fa-trash"></i>
+                      <i class="iconfont icon-delete"></i>
                     </button>
                   </div>
                 </td>
@@ -256,10 +246,17 @@ export default {
 </script>
 
 <style scoped>
+.AdminResources-hero {
+  
+  background: url('/AdminResources.png') center center / cover no-repeat fixed;
+  position: relative;
+  padding-top: 80px; /* avoid overlap with fixed navbar */
+  min-height: calc(100vh - 80px);
+}
 .admin-resources-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-  color: #ffffff;
+  background: rgba(245, 218, 218, 0.39);
+
 }
 
 .admin-header {
@@ -305,7 +302,7 @@ export default {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  background: linear-gradient(135deg, #5eadf3, #129ea8);
   border: none;
   color: #ffffff;
   font-weight: 600;
@@ -360,6 +357,12 @@ export default {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #ffffff;
+}
+
+/* Ensure native dropdown list items are readable */
+.form-select option {
+  color: #000000;
+  background: #ffffff;
 }
 
 .form-control:focus, .form-select:focus {

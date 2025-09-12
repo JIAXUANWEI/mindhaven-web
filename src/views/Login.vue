@@ -1,13 +1,10 @@
 <template>
-  <div class="login-page d-flex align-items-center justify-content-center">
-    <div class="login-box shadow-lg p-4 rounded bg-white">
-      <h2 class="text-center mb-4 fw-bold">Login to MindHaven 
-      </h2>
-      
-      <form @submit.prevent="login" novalidate>
+  <div class="login-box">
+    <h2 class="login-title">Login</h2>
+    <form @submit.prevent="login" novalidate>
         <!-- Email -->
         <div class="mb-3">
-          <label class="form-label">Email</label>
+          <label class="visually-hidden">Email</label>
           <div class="input-group">
             <span class="input-group-text">
               <i class="iconfont icon-email"></i>
@@ -25,30 +22,36 @@
 
         <!-- Password -->
         <div class="mb-3">
-          <label class="form-label">Password</label>
+          <label class="visually-hidden">Password</label>
           <div class="input-group">
             <span class="input-group-text">
               <i class="iconfont icon-password"></i>
             </span>
             <input 
               v-model="password" 
-              type="password" 
+              :type="showPassword ? 'text' : 'password'"
               class="form-control" 
               placeholder="Enter your password"
               required
             >
+            <button type="button" class="btn btn-eye" @click="showPassword = !showPassword">
+              <i class="fas" :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+            </button>
           </div>
           <div v-if="errors.password" class="text-danger small">{{ errors.password }}</div>
         </div>
 
-        <!-- Remember Me -->
-        <div class="form-check mb-3">
-          <input v-model="remember" type="checkbox" class="form-check-input" id="rememberMe">
-          <label class="form-check-label" for="rememberMe">Remember me</label>
-        </div>
-        <!-- register -->
-        <div class="text-center mt-3">
-  <router-link to="/register">Don't have an account? Register</router-link>
+        <!-- Remember + Links -->
+        <div class="d-flex align-items-center justify-content-between mb-3 small text-muted">
+          <div class="form-check m-0">
+            <input v-model="remember" type="checkbox" class="form-check-input" id="rememberMe">
+            <label class="form-check-label" for="rememberMe">Remember me</label>
+          </div>
+          <div class="link-group">
+            <button type="button" class="btn-link" @click="$emit('open-register')">Sign up</button>
+            <span class="mx-2">|</span>
+            <button type="button" class="btn-link" disabled>Forgot password</button>
+          </div>
         </div>
 
         <!-- Error Message -->
@@ -60,9 +63,7 @@
         <button type="submit" class="btn btn-primary w-100">
           <i class="iconfont icon-login"></i> Login
         </button>
-      </form>
-
-    </div>
+    </form>
   </div>
 </template>
 
@@ -79,7 +80,8 @@ export default {
       password: "",
       remember: false,
       errors: {},
-      formError: ""
+      formError: "",
+      showPassword: false
     }
   },
   methods: {
@@ -145,6 +147,8 @@ export default {
 
         //  跳转
         this.$router.push(role === "admin" ? "/admin" : "/");
+        // 触发事件关闭登录弹窗
+        this.$emit('login-success');
 
       } catch (err) {
         this.formError = "Invalid email or password";
@@ -160,28 +164,22 @@ export default {
 </script>
 
 <style scoped>
-.login-page {
-  min-height: 100vh;
-  background: linear-gradient(to right, #74ebd5, #ACB6E5);
-}
-
 .login-box {
   width: 100%;
   max-width: 400px;
 }
 
+.login-title { text-align:center; font-weight:700; margin-bottom:24px; letter-spacing:1px; }
 .input-group-text {
   background: #f8f9fa;
 }
+.btn-eye { border: 0; background: transparent; color: #888; padding: 0 12px; }
 
 button {
   font-weight: bold;
 }
 
-.btn-primary {
-  background-color: #FF8C00 !important;  /* 你想要的按钮颜色 */
-  border-color: #FF8C00 !important;
-}
+.btn-primary { background-color: #FF8C00 !important; border-color: #FF8C00 !important; }
 
 .form-label {
   display: block;

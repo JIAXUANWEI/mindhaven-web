@@ -43,6 +43,14 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+  // 每次跳转默认到页面顶部
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition;
+    } else {
+      return { left: 0, top: 0 };
+    }
+  }
 })
 
 router.beforeEach((to, from, next) => {

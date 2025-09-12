@@ -7,6 +7,18 @@ coverUrl
 status -->
 <template>
   <div class="story-detail-page">
+    <!-- Floating Actions -->
+    <div class="floating-actions">
+      <button class="fab" @click="handleLike" title="Like">
+        <i class="iconfont icon-like"></i>
+      </button>
+      <button class="fab" @click="scrollToReviews" title="Reviews">
+        <i class="iconfont icon-reviewArea"></i>
+      </button>
+      <button class="fab" @click="goPublish" title="Share your story">
+        <i class="iconfont icon-write"></i>
+      </button>
+    </div>
     <!-- Hero Section with Cover Image -->
      <!-- 用story对象是否存在来决定是否显示。动态绑定内联样式：根据 story.coverUrl 是否存在，设置背景图片；否则使用渐变背景。 -->
     <section v-if="story" class="story-hero" :style="{ 
@@ -41,6 +53,26 @@ status -->
             <div class="story-card">
               <div class="story-body">
                 <div class="content">{{ story.content }}</div>
+              </div>
+              <div class="story-stats d-flex align-items-center justify-content-between px-4 pb-3">
+                <div>
+                  <span class="stat me-4"><i class="iconfont icon-eye me-2"></i>{{ story.viewCount || 0 }} views</span>
+                  <span class="stat"><i class="iconfont icon-like me-2"></i>{{ story.likeCount || 0 }} likes</span>
+                </div>
+              </div>
+              <div class="px-4 pb-4" ref="reviewsSection">
+                <h5 class="mb-3">Reviews</h5>
+                <div v-if="reviews.length === 0" class="text-muted small mb-3">No reviews yet.</div>
+                <div v-else class="list-group mb-3">
+                  <div v-for="r in reviews" :key="r.id" class="list-group-item bg-transparent text-white border-secondary">
+                    <div class="small opacity-75">{{ r.author || 'Anonymous' }} · {{ formatDate(r.createdAt) }}</div>
+                    <div>{{ r.content }}</div>
+                  </div>
+                </div>
+                <form @submit.prevent="submitReview" class="d-flex gap-2">
+                  <input v-model="newReview" type="text" class="form-control" :placeholder="isLoggedIn ? 'Write a review...' : 'Login is required to comment'" required>
+                  <button class="btn btn-primary" type="submit">Post</button>
+                </form>
               </div>
             </div>
             
@@ -92,14 +124,18 @@ status -->
 </template>
 
 <script>
-import { fetchStoryById } from "../services/stories";
+import { fetchStoryById, recordStoryView, likeStory, fetchStoryReviews, addStoryReview } from "../services/stories";
+import { auth } from "../firebase";
 
 export default {
   name: "StoryDetail",
   data(){ 
     return { 
       story: null, 
-      loading: true 
+      loading: true,
+      reviews: [],
+      newReview: "",
+      isLoggedIn: false
     }; 
   },
   computed: {
@@ -109,15 +145,64 @@ export default {
       return d.toLocaleDateString();
     }
   },
+  methods: {
+    async handleLike() {
+      if (!this.story) return;
+      try {
+        await likeStory(this.story.id);
+        this.story.likeCount = (this.story.likeCount || 0) + 1;
+      } catch (e) { console.error(e); }
+    },
+    async submitReview() {
+      const text = this.newReview && this.newReview.trim();
+      if (!text || !this.story) return;
+      if (!this.isLoggedIn) {
+        // 触发全局事件让 Navbar 打开登录弹窗
+        window.dispatchEvent(new Event('open-login'));
+        return;
+      }
+      try {
+        const id = await addStoryReview(this.story.id, { content: text });
+        this.reviews.unshift({ id, author: 'Anonymous', content: text, createdAt: new Date() });
+        this.newReview = "";
+      } catch (e) { console.error(e); }
+    },
+    formatDate(ts) {
+      if (!ts) return '';
+      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      return d.toLocaleDateString();
+    },
+    scrollToReviews() {
+      const el = this.$refs.reviewsSection;
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+    goPublish() {
+      // 暂时跳到故事列表或发布入口（如有单独发布页可改这里）
+      this.$router.push('/stories');
+    },
+    goLogin() {
+      // 打开顶栏的登录弹窗更自然，不过这里先直接跳到 /login
+      this.$router.push('/login');
+    }
+  },
   async mounted(){
     const id = this.$route.params.id;
     try {
       this.story = await fetchStoryById(id);
+      if (this.story) {
+        await recordStoryView(id);
+        this.story.viewCount = (this.story.viewCount || 0) + 1;
+        this.reviews = await fetchStoryReviews(id, { size: 20 });
+      }
     } catch (error) {
       console.error('Error loading story:', error);
     } finally {
       this.loading = false;
     }
+
+    // 监听登录状态
+    this.isLoggedIn = !!auth.currentUser;
+    auth.onAuthStateChanged((u) => { this.isLoggedIn = !!u; });
   }
 };
 </script>
@@ -174,6 +259,38 @@ export default {
 .story-body {
   padding: 3rem;
 }
+.story-stats { border-top: 1px solid rgba(255,255,255,0.15); }
+.list-group-item { backdrop-filter: blur(4px); }
+
+.stat {
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+/* Floating actions */
+.floating-actions {
+  position: fixed;
+  top: 40%;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 1030;
+}
+.fab {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+}
+.fab:hover { background: rgba(255,255,255,0.25); transform: translateY(-2px); }
 
 .content { 
   white-space: pre-wrap; 
@@ -188,7 +305,7 @@ export default {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #CCCCCC, #666666);
+  background: linear-gradient(135deg, #CCCCCC, #006699);
   border: none;
   color: #ffffff;
   font-weight: 600;

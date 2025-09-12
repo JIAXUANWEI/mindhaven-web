@@ -156,6 +156,13 @@ export async function fetchAllResources({ limitCount = 100 } = {}) {
   return mapResourceSnap(snap);
 }
 
+// 获取资源总数
+export async function getResourcesCount() {
+  const q = query(resourcesCol);
+  const snap = await getDocs(q);
+  return snap.size;
+}
+
 // 获取精选资源（用于首页显示）
 export async function fetchFeaturedResources({ size = 3 } = {}) {
   // 首先尝试获取高优先级的资源

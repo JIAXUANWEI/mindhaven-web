@@ -1,6 +1,6 @@
 // src/services/stories.js - Firestore 实现
 import { db } from "../firebase";
-import { collection, query, where, orderBy, limit, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, updateDoc, increment, addDoc, serverTimestamp } from "firebase/firestore";
 
 const storiesCol = collection(db, "stories");
 // 辅助函数mapSnap：把 Firestore 原始数据转换成你 Vue 组件更容易处理的形式
@@ -35,4 +35,50 @@ export async function fetchStoryById(id) {
   const snap = await getDoc(ref);
   if (!snap.exists()) return null;
   return { id: snap.id, ...snap.data() };
+}
+
+// 获取故事总数
+export async function getStoriesCount() {
+  const q = query(storiesCol);
+  const snap = await getDocs(q);
+  return snap.size;
+}
+
+// 记录浏览次数 +1
+export async function recordStoryView(storyId) {
+  try {
+    const ref = doc(db, "stories", storyId);
+    await updateDoc(ref, { viewCount: increment(1) });
+  } catch (e) {
+    console.error("recordStoryView error", e);
+  }
+}
+
+// 点赞 +1（简单累加，不做去重）
+export async function likeStory(storyId) {
+  try {
+    const ref = doc(db, "stories", storyId);
+    await updateDoc(ref, { likeCount: increment(1) });
+  } catch (e) {
+    console.error("likeStory error", e);
+  }
+}
+
+// 加载评论：stories/{id}/reviews 子集合，按时间倒序
+export async function fetchStoryReviews(storyId, { size = 20 } = {}) {
+  const reviewsCol = collection(db, `stories/${storyId}/reviews`);
+  const q = query(reviewsCol, orderBy("createdAt", "desc"), limit(size));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+// 新增评论
+export async function addStoryReview(storyId, { author, content }) {
+  const reviewsCol = collection(db, `stories/${storyId}/reviews`);
+  const docRef = await addDoc(reviewsCol, {
+    author: author || "Anonymous",
+    content,
+    createdAt: serverTimestamp()
+  });
+  return docRef.id;
 }

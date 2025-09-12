@@ -9,6 +9,7 @@
         <ul class="navbar-nav ms-auto">
           <li class="nav-item"><router-link class="nav-link" to="/">Home</router-link></li>          
           <li class="nav-item"><router-link class="nav-link" to="/about">About</router-link></li>
+          <li class="nav-item"><router-link class="nav-link" to="/account">Account</router-link></li>
 
           <!-- Services 下拉菜单 -->
            <!-- nav-item dropdown：应用 Bootstrap 的样式，让它显示为带下拉功能的菜单."dropdown-menu"：Bootstrap 样式，定义下拉菜单的外观.dropdown-item"：Bootstrap 样式，表示这是下拉菜单里的一个选项 -->
@@ -51,8 +52,7 @@
         
         <!-- 登录/用户状态 -->
         <div v-if="!isLoggedIn" class="d-flex">
-          <router-link class="btn btn-dark me-2" to="/login">Login</router-link>
-          <router-link class="btn btn-outline-light" to="/register">Register</router-link>
+          <button class="btn btn-dark me-2" @click="openLogin">Login</button>
         </div>
         <div v-else class="d-flex align-items-center">
           <span class="text-white me-3">Welcome, {{ userEmail }}</span>
@@ -61,11 +61,43 @@
       </div>
     </div>
   </nav>
+
+  <!-- Login Modal -->
+  <div v-if="showLoginModal" class="modal show d-block" tabindex="-1" @keydown.esc="closeLogin">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="text-end">
+          <button type="button" class="btn-close" @click="closeLogin"></button>
+        </div>
+        <div class="modal-body">
+          <Login @open-register="() => { closeLogin(); openRegister(); }" @login-success="closeLogin" />
+        </div>
+      </div>
+    </div>
+  </div>
+  <div v-if="showLoginModal" class="modal-backdrop show" @click="closeLogin"></div>
+
+  <!-- Register Modal -->
+  <div v-if="showRegisterModal" class="modal show d-block" tabindex="-1" @keydown.esc="closeRegister">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="text-end">
+          <button type="button" class="btn-close" @click="closeRegister"></button>
+        </div>
+        <div class="modal-body">
+          <Register @open-login="() => { closeRegister(); openLogin(); }" />
+        </div>
+      </div>
+    </div>
+  </div>
+  <div v-if="showRegisterModal" class="modal-backdrop show" @click="closeRegister"></div>
 </template>
 
 <script>
 import { auth } from '../firebase.js';
 import { signOut } from 'firebase/auth';
+import Login from '../views/Login.vue';
+import Register from '../views/Register.vue';
 
 export default {
   name: 'Navbar',
@@ -74,7 +106,9 @@ export default {
       activeDropdown: null,
       isLoggedIn: false,
       userEmail: '',
-      isAdmin: false
+      isAdmin: false,
+      showLoginModal: false,
+      showRegisterModal: false
     }
   },
   mounted() {
@@ -90,6 +124,11 @@ export default {
         this.isAdmin = false;
       }
     });
+    // 监听全局事件以在其它组件触发登录弹窗
+    window.addEventListener('open-login', this.openLogin);
+  },
+  beforeUnmount() {
+    window.removeEventListener('open-login', this.openLogin);
   },
   methods: {
     checkAuthStatus() {
@@ -127,8 +166,21 @@ export default {
     toggleDropdown(dropdownName) {
       //是否this.activeDropdown === dropdownName，是的话activeDropdown为空，否则赋值dropdownName
       this.activeDropdown = this.activeDropdown === dropdownName ? null : dropdownName;
+    },
+    openLogin() {
+      this.showLoginModal = true;
+    },
+    closeLogin() {
+      this.showLoginModal = false;
+    },
+    openRegister() {
+      this.showRegisterModal = true;
+    },
+    closeRegister() {
+      this.showRegisterModal = false;
     }
-  }
+  },
+  components: { Login, Register }
 }
 </script>
 
@@ -213,7 +265,9 @@ export default {
   border-bottom: 0;
   border-left: 0.3em solid transparent;
 }
-
+.modal-content {
+  padding: 2rem;
+}
 /* 响应式设计 */
 @media (max-width: 991.98px) {
   .dropdown-menu {

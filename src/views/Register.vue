@@ -1,9 +1,7 @@
 <template>
-  <div class="login-page d-flex align-items-center justify-content-center">
-    <div class="login-box shadow-lg p-4 rounded bg-white">
-      <h2 class="text-center mb-4 fw-bold">Register</h2>
-      
-      <form @submit.prevent="register" novalidate>
+  <div class="login-box">
+    <h2 class="login-title">Register</h2>
+    <form @submit.prevent="register" novalidate>
         <div class="mb-3">
           <label class="form-label">Email</label>
           <div class="input-group">
@@ -38,11 +36,10 @@
           {{ formError }}
         </div>
         <button type="submit" class="btn btn-primary w-100">Register</button>
-        <div class="text-center mt-3">
-          <router-link to="/login">Already have an account? Login</router-link>
+        <div class="d-flex justify-content-end mt-2">
+          <button type="button" class="btn-link" @click="$emit('open-login')">Already have an account? Login</button>
         </div>
-      </form>
-    </div>
+    </form>
 
     <!-- 注册成功提示  -->
         <div 
@@ -142,15 +139,11 @@ export default {
 
 
 <style scoped>
-.login-page {
-  min-height: 100vh;
-  background: linear-gradient(to right, #74ebd5, #ACB6E5);
-}
-
 .login-box {
   width: 100%;
   max-width: 400px;
 }
+.login-title { text-align:center; font-weight:700; margin-bottom:24px; letter-spacing:1px; }
 
 .input-group-text {
   background: #f8f9fa;

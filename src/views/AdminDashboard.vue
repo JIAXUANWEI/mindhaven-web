@@ -1,31 +1,20 @@
 <template>
   <div class="admin-dashboard">
-    <!-- Header -->
-    <div class="admin-header">
-      <div class="container">
-        <div class="row align-items-center">
-          <div class="col-md-8">
-            <h1 class="display-4 fw-bold text-white mb-2">Admin Dashboard</h1>
-            <p class="text-white-50 mb-0">Welcome back, {{ userEmail }}! Manage your platform efficiently.</p>
+    <div class="AdminDashboard-hero d-flex align-items-center">
+        <div class="admin-stats-vertical">
+          <div class="stat-item">
+            <div class="stat-number">{{ stats.totalResources || 0 }}</div>
+            <div class="stat-label">Resources</div>
           </div>
-          <div class="col-md-4 text-end">
-            <div class="admin-stats">
-              <div class="stat-item">
-                <div class="stat-number">{{ stats.totalResources || 0 }}</div>
-                <div class="stat-label">Resources</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-number">{{ stats.totalStories || 0 }}</div>
-                <div class="stat-label">Stories</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-number">{{ stats.totalUsers || 0 }}</div>
-                <div class="stat-label">Users</div>
-              </div>
-            </div>
+          <div class="stat-item">
+            <div class="stat-number">{{ stats.totalStories || 0 }}</div>
+            <div class="stat-label">Stories</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">{{ stats.totalUsers || 0 }}</div>
+            <div class="stat-label">Users</div>
           </div>
         </div>
-      </div>
     </div>
 
     <!-- Main Content -->
@@ -41,57 +30,45 @@
               <div class="row g-3">
                 <div class="col-md-6">
                   <div class="action-card" @click="$router.push('/admin/resources')">
-                    <div class="action-icon">
-                      <i class="fas fa-book"></i>
-                    </div>
+                    <span class="">
+                      <i class="iconfont icon-book" style="font-size: 28px;"></i>
+                    </span>
                     <div class="action-content">
                       <h5>Manage Resources</h5>
                       <p>Create, edit, and organize learning resources</p>
-                    </div>
-                    <div class="action-arrow">
-                      <i class="fas fa-arrow-right"></i>
                     </div>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="action-card" @click="$router.push('/stories')">
-                    <div class="action-icon">
-                      <i class="fas fa-comments"></i>
-                    </div>
+                    <span class="">
+                      <i class="iconfont icon-Book" style="font-size: 28px;"></i>
+                    </span>
                     <div class="action-content">
                       <h5>Manage Stories</h5>
                       <p>Review and moderate user stories</p>
-                    </div>
-                    <div class="action-arrow">
-                      <i class="fas fa-arrow-right"></i>
                     </div>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="action-card" @click="showAnalytics = true">
-                    <div class="action-icon">
-                      <i class="fas fa-chart-bar"></i>
-                    </div>
+                    <span class="">
+                      <i class="iconfont icon-analysis" style="font-size: 28px;"></i>
+                    </span>
                     <div class="action-content">
                       <h5>Analytics</h5>
                       <p>View platform usage and insights</p>
-                    </div>
-                    <div class="action-arrow">
-                      <i class="fas fa-arrow-right"></i>
                     </div>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="action-card" @click="$router.push('/account')">
-                    <div class="action-icon">
-                      <i class="fas fa-user-cog"></i>
-                    </div>
+                    <span>
+                      <i class="iconfont icon-ACCOUNT" style="font-size: 28px;"></i>
+                    </span>
                     <div class="action-content">
                       <h5>Account Settings</h5>
                       <p>Manage your admin account</p>
-                    </div>
-                    <div class="action-arrow">
-                      <i class="fas fa-arrow-right"></i>
                     </div>
                   </div>
                 </div>
@@ -118,64 +95,14 @@
               <div v-else class="activity-list">
                 <div v-for="resource in recentResources.slice(0, 5)" :key="resource.id" class="activity-item">
                   <div class="activity-icon">
-                    <i class="fas fa-book"></i>
+                    <img v-if="resource.coverUrl" :src="resource.coverUrl" alt="resource-cover">
+                    <i v-else class="iconfont icon-book" style="font-size: 28px;"></i>
                   </div>
                   <div class="activity-content">
                     <div class="activity-title">{{ resource.title }}</div>
                     <div class="activity-meta">
                       <span class="badge" :class="getStatusClass(resource.status)">{{ resource.status }}</span>
                       <span class="activity-date">{{ formatDate(resource.createdAt) }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- System Status -->
-      <div class="row mt-4">
-        <div class="col-12">
-          <div class="admin-card">
-            <div class="card-header">
-              <h3 class="card-title">System Status</h3>
-            </div>
-            <div class="card-body">
-              <div class="row g-3">
-                <div class="col-md-3">
-                  <div class="status-item">
-                    <div class="status-indicator success"></div>
-                    <div class="status-content">
-                      <div class="status-title">Database</div>
-                      <div class="status-subtitle">Online</div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="status-item">
-                    <div class="status-indicator success"></div>
-                    <div class="status-content">
-                      <div class="status-title">Authentication</div>
-                      <div class="status-subtitle">Active</div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="status-item">
-                    <div class="status-indicator success"></div>
-                    <div class="status-content">
-                      <div class="status-title">Storage</div>
-                      <div class="status-subtitle">Available</div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-md-3">
-                  <div class="status-item">
-                    <div class="status-indicator success"></div>
-                    <div class="status-content">
-                      <div class="status-title">API</div>
-                      <div class="status-subtitle">Responsive</div>
                     </div>
                   </div>
                 </div>
@@ -214,7 +141,9 @@
 </template>
 
 <script>
-import { fetchAllResources } from '../services/resources';
+import { fetchAllResources, getResourcesCount } from '../services/resources';
+import { getStoriesCount } from '../services/stories';
+import { getUsersCount } from '../services/users';
 
 export default {
   name: 'AdminDashboard',
@@ -236,6 +165,10 @@ export default {
     await this.loadDashboardData();
   },
   methods: {
+    isImageUrl(url) {
+      if (!url || typeof url !== 'string') return false;
+      return /(\.png|\.jpe?g|\.gif|\.webp|\.svg)(\?.*)?$/i.test(url);
+    },
     loadUserData() {
       const userData = JSON.parse(localStorage.getItem("currentUser") || "{}");
       this.userEmail = userData.email || "Admin";
@@ -243,13 +176,19 @@ export default {
     async loadDashboardData() {
       this.loading = true;
       try {
-        // Load recent resources
+        // Load recent resources for the activity list
         this.recentResources = await fetchAllResources({ limitCount: 10 });
-        this.stats.totalResources = this.recentResources.length;
         
-        // TODO: Load stories and users data when services are available
-        this.stats.totalStories = 0;
-        this.stats.totalUsers = 0;
+        // Load statistics in parallel
+        const [resourcesCount, storiesCount, usersCount] = await Promise.all([
+          getResourcesCount(),
+          getStoriesCount(),
+          getUsersCount()
+        ]);
+        
+        this.stats.totalResources = resourcesCount;
+        this.stats.totalStories = storiesCount;
+        this.stats.totalUsers = usersCount;
       } catch (error) {
         console.error('Error loading dashboard data:', error);
       } finally {
@@ -278,41 +217,65 @@ export default {
 </script>
 
 <style scoped>
+
+/* head */
+.AdminDashboard-hero {
+  min-height: calc(100vh - 80px);
+  padding-top: 80px; /* avoid overlap with fixed navbar */
+  background: url('/AdminDashboard_bg.png') center center / cover no-repeat fixed;
+  position: relative;
+}
+.AdminDashboard-hero .container {
+  position: relative;
+  z-index: 2;
+}
+.admin-stats-vertical {
+  position: absolute;
+  top: 50%;
+  right: 2rem;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  z-index: 10;
+}
 .admin-dashboard {
   min-height: 100vh;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
   color: #ffffff;
 }
-
-.admin-header {
-  background: linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.1) 100%);
-  padding: 3rem 0;
-  margin-bottom: 2rem;
-}
-
-.admin-stats {
-  display: flex;
-  gap: 2rem;
-  justify-content: flex-end;
-}
-
 .stat-item {
   text-align: center;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 1.0rem 0.5rem;
+  min-width: 50px;
+  transition: all 0.3s ease;
+}
+.stat-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateX(-10px);
+  box-shadow: 0 10px 30px rgba(178, 77, 245, 0.3);
 }
 
 .stat-number {
-  font-size: 2rem;
+  font-size: 2.0rem;
   font-weight: bold;
   color: #4facfe;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  margin-bottom: 0.5rem;
 }
-
 .stat-label {
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: RGB(194, 30, 86, 0.8);
   text-transform: uppercase;
   letter-spacing: 1px;
+  font-weight: 600;
 }
 
+/* Quick Actions */
 .admin-card {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
   backdrop-filter: blur(15px);
@@ -360,19 +323,6 @@ export default {
   box-shadow: 0 10px 30px rgba(79, 172, 254, 0.2);
 }
 
-.action-icon {
-  width: 50px;
-  height: 50px;
-  background: linear-gradient(135deg, #4facfe, #00f2fe);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  color: #ffffff;
-  flex-shrink: 0;
-}
-
 .action-content {
   flex: 1;
 }
@@ -389,12 +339,8 @@ export default {
   font-size: 0.9rem;
 }
 
-.action-arrow {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 1.2rem;
-  flex-shrink: 0;
-}
 
+/* Recent Activity */
 .activity-list {
   max-height: 300px;
   overflow-y: auto;
@@ -411,17 +357,16 @@ export default {
 .activity-item:last-child {
   border-bottom: none;
 }
-
 .activity-icon {
-  width: 40px;
-  height: 40px;
-  background: rgba(79, 172, 254, 0.2);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #4facfe;
-  flex-shrink: 0;
+  width: 50px;
+  height: 50px;
+  flex-shrink: 0; 
+}
+.activity-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
 }
 
 .activity-content {
@@ -429,6 +374,7 @@ export default {
 }
 
 .activity-title {
+  display: flex;
   font-weight: 600;
   color: #ffffff;
   margin-bottom: 0.25rem;
@@ -446,41 +392,7 @@ export default {
   font-size: 0.8rem;
 }
 
-.status-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
-}
 
-.status-indicator {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.status-indicator.success {
-  background: #28a745;
-  box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
-}
-
-.status-content {
-  flex: 1;
-}
-
-.status-title {
-  font-weight: 600;
-  color: #ffffff;
-  margin-bottom: 0.25rem;
-}
-
-.status-subtitle {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.9rem;
-}
 
 .modal-content {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
@@ -496,33 +408,5 @@ export default {
   border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.badge {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
-}
 
-.spinner-border {
-  border-width: 0.2em;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .admin-stats {
-    justify-content: center;
-    gap: 1rem;
-  }
-  
-  .stat-number {
-    font-size: 1.5rem;
-  }
-  
-  .action-card {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .action-arrow {
-    display: none;
-  }
-}
 </style>
