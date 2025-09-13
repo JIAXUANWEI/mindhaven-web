@@ -55,10 +55,16 @@ export async function recordStoryView(storyId) {
 }
 
 // 点赞 +1（简单累加，不做去重）
-export async function likeStory(storyId) {
+export async function likeStory(storyId, userId = null) {
   try {
     const ref = doc(db, "stories", storyId);
     await updateDoc(ref, { likeCount: increment(1) });
+    
+    // 记录用户交互（如果提供了userId）
+    if (userId) {
+      const { recordUserInteraction } = await import('./userInteractions.js');
+      await recordUserInteraction(userId, storyId, 'story', 'like');
+    }
   } catch (e) {
     console.error("likeStory error", e);
   }
@@ -73,12 +79,24 @@ export async function fetchStoryReviews(storyId, { size = 20 } = {}) {
 }
 
 // 新增评论
-export async function addStoryReview(storyId, { author, content }) {
+export async function addStoryReview(storyId, { author, userId, content }) {
   const reviewsCol = collection(db, `stories/${storyId}/reviews`);
   const docRef = await addDoc(reviewsCol, {
     author: author || "Anonymous",
+    userId: userId || null,
     content,
     createdAt: serverTimestamp()
   });
+  
+  // 记录用户交互（如果提供了userId）
+  if (userId) {
+    const { recordUserInteraction } = await import('./userInteractions.js');
+    await recordUserInteraction(userId, storyId, 'story', 'comment', { 
+      content, 
+      author,
+      reviewId: docRef.id 
+    });
+  }
+  
   return docRef.id;
 }

@@ -148,8 +148,14 @@ export default {
   methods: {
     async handleLike() {
       if (!this.story) return;
+      if (!this.isLoggedIn) {
+        // 触发全局事件让 Navbar 打开登录弹窗
+        window.dispatchEvent(new Event('open-login'));
+        return;
+      }
       try {
-        await likeStory(this.story.id);
+        const current = auth.currentUser;
+        await likeStory(this.story.id, current?.uid);
         this.story.likeCount = (this.story.likeCount || 0) + 1;
       } catch (e) { console.error(e); }
     },
@@ -162,8 +168,10 @@ export default {
         return;
       }
       try {
-        const id = await addStoryReview(this.story.id, { content: text });
-        this.reviews.unshift({ id, author: 'Anonymous', content: text, createdAt: new Date() });
+        const current = auth.currentUser;
+        const author = current?.displayName || current?.email || 'Anonymous';
+        const id = await addStoryReview(this.story.id, { content: text, author, userId: current?.uid });
+        this.reviews.unshift({ id, author, content: text, createdAt: new Date() });
         this.newReview = "";
       } catch (e) { console.error(e); }
     },
@@ -181,8 +189,8 @@ export default {
       this.$router.push('/stories');
     },
     goLogin() {
-      // 打开顶栏的登录弹窗更自然，不过这里先直接跳到 /login
-      this.$router.push('/login');
+      // 触发全局事件让 Navbar 打开登录弹窗
+      window.dispatchEvent(new Event('open-login'));
     }
   },
   async mounted(){

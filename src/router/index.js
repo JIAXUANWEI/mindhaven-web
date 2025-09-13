@@ -22,7 +22,7 @@ import AdminResources from '../views/AdminResources.vue'
 
 const routes = [
   { path: '/', component: Home },
-  { path: '/login', component: Login },
+  // { path: '/login', component: Login }, // Login now handled by modal
   { path: '/register', component: Register },
   { path: '/about', component: About },
   { path: '/services', component: Services },
@@ -58,7 +58,12 @@ router.beforeEach((to, from, next) => {
   
   // Check if route requires authentication
   if (to.meta.requiresAuth && !currentUser) {
-    next("/login");
+    // Redirect to home page and trigger login modal
+    next("/");
+    // Trigger login modal after navigation
+    setTimeout(() => {
+      window.dispatchEvent(new Event('open-login'));
+    }, 100);
     return;
   }
   
@@ -71,11 +76,11 @@ router.beforeEach((to, from, next) => {
     }
   }
   
-  // Legacy check for account page
-  if (to.path === "/account" && !currentUser) {
-    next("/login");
-    return;
-  }
+  // Legacy check for account page - now handled by component itself with modal
+  // if (to.path === "/account" && !currentUser) {
+  //   next("/login");
+  //   return;
+  // }
   
   next();
 });
