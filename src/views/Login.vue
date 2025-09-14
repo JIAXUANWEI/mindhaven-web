@@ -132,8 +132,17 @@ export default {
           // 保存到本地存储
           localStorage.setItem("currentUser", JSON.stringify({ email: user.email, role }));
 
-          // 跳转
-          this.$router.push(role === "admin" ? "/admin" : "/");
+          // 主动触发导航栏更新
+          window.dispatchEvent(new CustomEvent('user-role-updated', { 
+            detail: { email: user.email, role } 
+          }));
+
+          // 跳转逻辑：只有管理员才跳转，普通用户停留在当前页面
+          if (role === "admin") {
+            this.$router.push("/admin");
+          } else {
+            // 普通用户不跳转，停留在当前页面
+          }
 
           // 关闭登录弹窗
           this.$emit("login-success");

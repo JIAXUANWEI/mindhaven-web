@@ -115,9 +115,12 @@ export default {
     });
     // 监听全局事件以在其它组件触发登录弹窗
     window.addEventListener('open-login', this.openLogin);
+    // 监听用户角色更新事件
+    window.addEventListener('user-role-updated', this.handleRoleUpdate);
   },
   beforeUnmount() {
     window.removeEventListener('open-login', this.openLogin);
+    window.removeEventListener('user-role-updated', this.handleRoleUpdate);
   },
   methods: {
     checkAuthStatus() {
@@ -167,6 +170,12 @@ export default {
     },
     closeRegister() {
       this.showRegisterModal = false;
+    },
+    handleRoleUpdate(event) {
+      const { email, role } = event.detail;
+      this.userEmail = email;
+      this.isAdmin = role === 'admin';
+      this.isLoggedIn = true;
     }
   },
   components: { Login, Register }
