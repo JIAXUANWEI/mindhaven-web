@@ -9,12 +9,10 @@
         <ul class="navbar-nav ms-auto">
           <li class="nav-item"><router-link class="nav-link" to="/">Home</router-link></li>          
           <li class="nav-item"><router-link class="nav-link" to="/about">About</router-link></li>
-          <li class="nav-item"><router-link class="nav-link" to="/account">Account</router-link></li>
+          <!-- 只有非管理员用户才显示 Account 链接 -->
+          <li v-if="!isAdmin" class="nav-item"><router-link class="nav-link" to="/account">Account</router-link></li>
 
           <!-- Services 下拉菜单 -->
-           <!-- nav-item dropdown：应用 Bootstrap 的样式，让它显示为带下拉功能的菜单."dropdown-menu"：Bootstrap 样式，定义下拉菜单的外观.dropdown-item"：Bootstrap 样式，表示这是下拉菜单里的一个选项 -->
-            <!-- @mouseenter="showDropdown('services')"：Vue 事件绑定，鼠标移入时调用showDropdown('services') 方法，显示下拉菜单,鼠标移出时调用 hideDropdown('services') 方法，隐藏下拉菜单 -->
-             
           <li class="nav-item dropdown" @mouseenter="showDropdown('services')" @mouseleave="hideDropdown('services')">
             <a class="nav-link dropdown-toggle" href="#" role="button" @click.prevent="toggleDropdown('services')" @keydown.enter="toggleDropdown('services')">
               Our Service
@@ -27,17 +25,6 @@
             </ul>
           </li>
 
-          <!-- Wellbeing 下拉菜单 (暂时禁用，等待实现) -->
-          <!-- <li class="nav-item dropdown" @mouseenter="showDropdown('wellbeing')" @mouseleave="hideDropdown('wellbeing')">
-            <a class="nav-link dropdown-toggle" href="#" role="button" @click.prevent="toggleDropdown('wellbeing')" @keydown.enter="toggleDropdown('wellbeing')">
-              My Wellbeing
-            </a>
-            <ul class="dropdown-menu" :class="{ show: activeDropdown === 'wellbeing' }" @keydown.esc="hideDropdown('wellbeing')">
-              <li><router-link class="dropdown-item" to="/wellbeing" @click="hideDropdown('wellbeing')">Self Assessment</router-link></li>
-              <li><router-link class="dropdown-item" to="/wellbeing#tracking" @click="hideDropdown('wellbeing')">Mood Tracking</router-link></li>
-            </ul>
-          </li> -->
-
           <!-- Admin 下拉菜单 (仅管理员可见) -->
           <li v-if="isAdmin" class="nav-item dropdown" @mouseenter="showDropdown('admin')" @mouseleave="hideDropdown('admin')">
             <a class="nav-link dropdown-toggle" href="#" role="button" @click.prevent="toggleDropdown('admin')" @keydown.enter="toggleDropdown('admin')">
@@ -46,6 +33,8 @@
             <ul class="dropdown-menu" :class="{ show: activeDropdown === 'admin' }" @keydown.esc="hideDropdown('admin')">
               <li><router-link class="dropdown-item" to="/admin" @click="hideDropdown('admin')">Dashboard</router-link></li>
               <li><router-link class="dropdown-item" to="/admin/resources" @click="hideDropdown('admin')">Manage Resources</router-link></li>
+              <li><router-link class="dropdown-item" to="/admin/stories" @click="hideDropdown('admin')">Manage Stories</router-link></li>
+              <li><router-link class="dropdown-item" to="/admin/users" @click="hideDropdown('admin')">Manage Users</router-link></li>
             </ul>
           </li>
         </ul>

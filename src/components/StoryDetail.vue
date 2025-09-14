@@ -313,7 +313,7 @@ export default {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #CCCCCC, #006699);
+  background: linear-gradient(135deg, #CCCCCC, #a56817);
   border: none;
   color: #ffffff;
   font-weight: 600;
@@ -324,7 +324,7 @@ export default {
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #006699, #CCCCCC);
+  background: linear-gradient(135deg, #a56817, #CCCCCC);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
   color: #ffffff;

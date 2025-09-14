@@ -302,16 +302,18 @@ export default {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #5eadf3, #129ea8);
+  background: linear-gradient(135deg, #CCCCCC, #a56817);
   border: none;
   color: #ffffff;
   font-weight: 600;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #00f2fe, #4facfe);
+  background: linear-gradient(135deg, #a56817, #CCCCCC);
   transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
   color: #ffffff;
 }
 

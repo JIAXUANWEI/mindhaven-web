@@ -63,6 +63,15 @@
         <button type="submit" class="btn btn-primary w-100">
           <i class="iconfont icon-login"></i> Login
         </button>
+
+        <!-- Register Link -->
+        <div class="text-center mt-3">
+          <p class="mb-0 text-muted">Don't have an account? 
+            <button type="button" class="btn-link p-0" @click="$emit('open-register')">
+              Sign up here
+            </button>
+          </p>
+        </div>
     </form>
   </div>
 </template>
@@ -107,49 +116,31 @@ export default {
       // 如果有错误，终止提交
       if (Object.keys(this.errors).length > 0) return
 
-        try {
-        //  Firebase 登录
+       try {
+        // Firebase 登录
         const userCredential = await signInWithEmailAndPassword(auth, this.email, this.password);
         const user = userCredential.user;
 
-        //  默认角色 user（如果不用 Firestore 管理角色，可以直接写死）
-        let role = "user";
-
-        //  如果你在 Firestore 里存了 role，就取出来
-        const docRef = doc(db, "users", user.uid);//创建一个指向 Firestore 文档的"引用 (Reference)"。db → Firestore 数据库对象。"users" → 集合名字（相当于数据库表）。user.uid → 这个用户的唯一 ID，作为文档 ID。
+        // 获取 Firestore 用户文档
+        const docRef = doc(db, "users", user.uid);
         const docSnap = await getDoc(docRef);
-        console.log("User UID:", user.uid);
-        console.log("Document exists:", docSnap.exists());
+
         if (docSnap.exists()) {
           const userData = docSnap.data();
-          console.log("User data from Firestore:", userData);
-          role = userData.role || "user";
-          console.log("Final role:", role);
+          const role = userData.role; // 直接取出 role（必然存在）
+
+          // 保存到本地存储
+          localStorage.setItem("currentUser", JSON.stringify({ email: user.email, role }));
+
+          // 跳转
+          this.$router.push(role === "admin" ? "/admin" : "/");
+
+          // 关闭登录弹窗
+          this.$emit("login-success");
         } else {
-          console.log("No user document found in Firestore, creating new document...");
-          // 检查是否是管理员邮箱，如果是则创建管理员文档
-          const adminEmails = ["admin@example.com", "administrator@example.com"]; // 在这里添加您的管理员邮箱
-          if (adminEmails.includes(user.email)) {
-            role = "admin";
-            console.log("Admin email detected, setting role to admin");
-          }
-          
-          // 创建用户文档
-          await setDoc(docRef, {
-            email: user.email,
-            role: role,
-            createdAt: new Date()
-          });
-          console.log("User document created with role:", role);
+          // 理论上不会发生，除非数据库缺少用户文档
+          throw new Error("User document not found in Firestore");
         }
-        //  把用户信息保存到浏览器本地存储
-        localStorage.setItem("currentUser", JSON.stringify({ email: user.email, role }));//localStorage.setItem(key, value) → 存一条数据。JSON.stringify → 把对象转成字符串，方便存储。
-
-        //  跳转
-        this.$router.push(role === "admin" ? "/admin" : "/");
-        // 触发事件关闭登录弹窗
-        this.$emit('login-success');
-
       } catch (err) {
         this.formError = "Invalid email or password";
         console.error("Login error:", err);

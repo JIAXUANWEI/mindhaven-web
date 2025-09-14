@@ -13,6 +13,8 @@ import ResourceList from '../views/ResourceList.vue'
 import ResourceDetail from '../components/ResourceDetail.vue'
 import AdminDashboard from '../views/AdminDashboard.vue'
 import AdminResources from '../views/AdminResources.vue'
+import AdminStories from '../views/AdminStories.vue'
+import AdminUsers from '../views/AdminUsers.vue'
 // import Support from '../views/Support.vue'
 // import Wellbeing from '../views/Wellbeing.vue'
 
@@ -36,7 +38,9 @@ const routes = [
   
   // Admin routes
   { path: '/admin', name: 'adminDashboard', component: AdminDashboard, meta: { requiresAuth: true, requiresAdmin: true } },
-  { path: '/admin/resources', name: 'adminResources', component: AdminResources, meta: { requiresAuth: true, requiresAdmin: true } }
+  { path: '/admin/resources', name: 'adminResources', component: AdminResources, meta: { requiresAuth: true, requiresAdmin: true } },
+  { path: '/admin/stories', name: 'AdminStories', component: AdminStories, meta: { requiresAuth: true, requiresAdmin: true } },
+  { path: '/admin/users', name: 'AdminUsers', component: AdminUsers, meta: { requiresAuth: true, requiresAdmin: true } }
 ]
 
 

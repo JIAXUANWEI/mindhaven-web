@@ -40,7 +40,7 @@
                   </div>
                 </div>
                 <div class="col-md-6">
-                  <div class="action-card" @click="$router.push('/stories')">
+                  <div class="action-card" @click="$router.push('/admin/stories')">
                     <span class="">
                       <i class="iconfont icon-Book" style="font-size: 28px;"></i>
                     </span>
@@ -62,13 +62,13 @@
                   </div>
                 </div>
                 <div class="col-md-6">
-                  <div class="action-card" @click="$router.push('/account')">
+                  <div class="action-card" @click="$router.push('/admin/users')">
                     <span>
                       <i class="iconfont icon-ACCOUNT" style="font-size: 28px;"></i>
                     </span>
                     <div class="action-content">
-                      <h5>Account Settings</h5>
-                      <p>Manage your admin account</p>
+                      <h5>Manage Users</h5>
+                      <p>View and manage user accounts</p>
                     </div>
                   </div>
                 </div>

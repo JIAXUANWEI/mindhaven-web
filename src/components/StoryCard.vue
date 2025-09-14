@@ -6,7 +6,7 @@
       <h5 class="card-title mb-0 me-2">{{ story.title }}</h5>
       <small class="text-start">{{ story.authorName || 'Anonymous' }}</small>
       <p class="card-text text-secondary">{{ story.excerpt }}</p>
-      <router-link :to="`/stories/${story.id}`" class="btn btn-dark btn-sm">Read More</router-link>
+      <router-link :to="`/stories/${story.id}`" class="btn btn-primary btn-sm">Read More</router-link>
     </div>
   </div>
 </template>
@@ -22,5 +22,20 @@ export default {
 .story-card img.card-img-top {
   height: 180px;
   object-fit: cover;
+}
+
+.story-card .btn-primary {
+  background: linear-gradient(135deg, #CCCCCC, #a56817);
+  border: none;
+  color: #ffffff;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+}
+
+.story-card .btn-primary:hover {
+  background: linear-gradient(135deg, #a56817, #CCCCCC);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+  color: #ffffff;
 }
 </style>
