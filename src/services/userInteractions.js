@@ -9,7 +9,8 @@ import {
   getDocs, 
   doc, 
   addDoc,
-  serverTimestamp
+  serverTimestamp,
+  deleteDoc
 } from "firebase/firestore";
 
 const interactionsCol = collection(db, "userInteractions");
@@ -48,6 +49,28 @@ export async function fetchUserLikes(userId, { limitCount = 20 } = {}) {
   } catch (error) {
     console.error("Error fetching user likes:", error);
     return [];
+  }
+}
+// 删除用户交互记录
+export async function removeUserInteraction(userId, itemId, itemType, action) {
+  try {
+    const q = query(
+      interactionsCol,
+      where("userId", "==", userId),
+      where("itemId", "==", itemId),
+      where("itemType", "==", itemType),
+      where("action", "==", action)
+    );
+    const snap = await getDocs(q);
+    
+    // 删除所有匹配的记录
+    const deletePromises = snap.docs.map(doc => deleteDoc(doc.ref));
+    await Promise.all(deletePromises);
+    
+    console.log(`Removed ${snap.docs.length} interaction records`);
+  } catch (error) {
+    console.error("Error removing user interaction:", error);
+    throw error;
   }
 }
 

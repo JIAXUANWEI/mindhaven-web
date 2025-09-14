@@ -9,7 +9,7 @@ status -->
   <div class="story-detail-page">
     <!-- Floating Actions -->
     <div class="floating-actions">
-      <button class="fab" @click="handleLike" title="Like">
+      <button class="fab" :class="{ 'liked': isLiked }" @click="handleLike" title="Like">
         <i class="iconfont icon-like"></i>
       </button>
       <button class="fab" @click="scrollToReviews" title="Reviews">
@@ -124,7 +124,8 @@ status -->
 </template>
 
 <script>
-import { fetchStoryById, recordStoryView, likeStory, fetchStoryReviews, addStoryReview } from "../services/stories";
+import { fetchStoryById, recordStoryView, toggleStoryLike, fetchStoryReviews, addStoryReview } from "../services/stories";
+import { hasUserLiked } from "../services/userInteractions";
 import { auth } from "../firebase";
 
 export default {
@@ -135,7 +136,8 @@ export default {
       loading: true,
       reviews: [],
       newReview: "",
-      isLoggedIn: false
+      isLoggedIn: false,
+      isLiked: false // 添加点赞状态
     }; 
   },
   computed: {
@@ -149,15 +151,32 @@ export default {
     async handleLike() {
       if (!this.story) return;
       if (!this.isLoggedIn) {
-        // 触发全局事件让 Navbar 打开登录弹窗
         window.dispatchEvent(new Event('open-login'));
         return;
       }
+      
       try {
         const current = auth.currentUser;
-        await likeStory(this.story.id, current?.uid);
-        this.story.likeCount = (this.story.likeCount || 0) + 1;
-      } catch (e) { console.error(e); }
+        const result = await toggleStoryLike(this.story.id, current.uid);
+        
+        // 直接使用后端返回的准确数据
+        this.isLiked = result.liked;
+        this.story.likeCount = result.likeCount;
+        
+      } catch (e) { 
+        console.error('Like operation failed:', e); 
+      }
+    },
+    
+    async checkUserLikeStatus() {
+      if (!this.isLoggedIn || !this.story) return;
+      
+      try {
+        const current = auth.currentUser;
+        this.isLiked = await hasUserLiked(current.uid, this.story.id, 'story');
+      } catch (e) {
+        console.error('Error checking like status:', e);
+      }
     },
     async submitReview() {
       const text = this.newReview && this.newReview.trim();
@@ -210,7 +229,19 @@ export default {
 
     // 监听登录状态
     this.isLoggedIn = !!auth.currentUser;
-    auth.onAuthStateChanged((u) => { this.isLoggedIn = !!u; });
+    auth.onAuthStateChanged(async (u) => { 
+      this.isLoggedIn = !!u;
+      if (u && this.story) {
+        await this.checkUserLikeStatus();
+      } else {
+        this.isLiked = false;
+      }
+    });
+    
+    // 如果已登录，检查点赞状态
+    if (this.isLoggedIn && this.story) {
+      await this.checkUserLikeStatus();
+    }
   }
 };
 </script>
@@ -299,6 +330,28 @@ export default {
   backdrop-filter: blur(6px);
 }
 .fab:hover { background: rgba(255,255,255,0.25); transform: translateY(-2px); }
+
+.fab.liked {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+}
+
+.fab.liked:hover {
+  background: linear-gradient(135deg, #ee5a52, #ff6b6b);
+  transform: scale(1.15);
+}
+
+.fab.liked .icon-like {
+  animation: heartbeat 0.6s ease-in-out;
+}
+
+@keyframes heartbeat {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
 
 .content { 
   white-space: pre-wrap; 

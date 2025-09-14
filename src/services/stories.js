@@ -54,19 +54,40 @@ export async function recordStoryView(storyId) {
   }
 }
 
-// 点赞 +1（简单累加，不做去重）
-export async function likeStory(storyId, userId = null) {
+// 点赞切换（点赞/取消点赞）
+export async function toggleStoryLike(storyId, userId) {
   try {
-    const ref = doc(db, "stories", storyId);
-    await updateDoc(ref, { likeCount: increment(1) });
+    const { hasUserLiked } = await import('./userInteractions.js');
+    const hasLiked = await hasUserLiked(userId, storyId, 'story');
     
-    // 记录用户交互（如果提供了userId）
-    if (userId) {
+    const ref = doc(db, "stories", storyId);
+    
+    if (hasLiked) {
+      // 取消点赞：删除交互记录并减少计数
+      const { removeUserInteraction } = await import('./userInteractions.js');
+      await removeUserInteraction(userId, storyId, 'story', 'like');
+      await updateDoc(ref, { likeCount: increment(-1) });
+      
+      // 获取更新后的计数
+      const updatedDoc = await getDoc(ref);
+      const newCount = updatedDoc.data()?.likeCount || 0;
+      
+      return { liked: false, likeCount: Math.max(newCount, 0) };
+    } else {
+      // 点赞：记录交互并增加计数
       const { recordUserInteraction } = await import('./userInteractions.js');
       await recordUserInteraction(userId, storyId, 'story', 'like');
+      await updateDoc(ref, { likeCount: increment(1) });
+      
+      // 获取更新后的计数
+      const updatedDoc = await getDoc(ref);
+      const newCount = updatedDoc.data()?.likeCount || 0;
+      
+      return { liked: true, likeCount: newCount };
     }
   } catch (e) {
-    console.error("likeStory error", e);
+    console.error("toggleStoryLike error", e);
+    throw e;
   }
 }
 
