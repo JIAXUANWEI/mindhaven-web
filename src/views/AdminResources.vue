@@ -10,16 +10,60 @@
         <i class="iconfont icon-add">Add New Resource</i>
       </button>
       <div class="admin-card">
+        <!-- Controls: Column Filters -->
+        <div class="p-3">
+          <div class="row g-2">
+            <div class="col-12 col-md-4">
+              <div class="input-group">
+                <span class="input-group-text">Title</span>
+                <input v-model.trim="filters.title" type="text" class="form-control" placeholder="Filter by title">
+              </div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="input-group">
+                <span class="input-group-text">Category</span>
+                <input v-model.trim="filters.category" type="text" class="form-control" placeholder="Filter by category">
+              </div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="input-group">
+                <span class="input-group-text">Status</span>
+                <input v-model.trim="filters.status" type="text" class="form-control" placeholder="Filter by status">
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="input-group">
+                <span class="input-group-text">Views</span>
+                <input v-model.number="filters.viewsMin" type="number" class="form-control" placeholder="Min">
+                <span class="input-group-text">-</span>
+                <input v-model.number="filters.viewsMax" type="number" class="form-control" placeholder="Max">
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="input-group">
+                <span class="input-group-text">Created</span>
+                <input v-model="filters.createdFrom" type="date" class="form-control">
+                <span class="input-group-text">-</span>
+                <input v-model="filters.createdTo" type="date" class="form-control">
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="table-responsive">
           <table class="table table-hover">
             <thead>
               <tr>
-                <th>Title</th>
-                <th>Category</th>
-                <th>Status</th>
-                <th>Views</th>
-                <th>Created</th>
-                <th>Actions</th>
+                <th style="color: #ffffff;">Title</th>
+                <th style="color: #ffffff;">Category</th>
+                <th style="color: #ffffff;">Status</th>
+                <!-- 只有当条件为真时，才加上 active 类。也就是说：当 sortKey 是 'viewCount'（即当前正按“浏览数”排序）时，最终类名会是：class="sortable text-nowrap active"-->
+                <th style="color: #ffffff;" @click="setSort('viewCount')" :class="['sortable','text-nowrap', { active: sortKey === 'viewCount' }]">
+                  Views ▲▼
+                </th>
+                <th style="color: #ffffff;" @click="setSort('createdAt')" :class="['sortable','text-nowrap', { active: sortKey === 'createdAt' }]">
+                  Created ▲▼
+                </th>
+                <th style="color: #ffffff;">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -35,7 +79,13 @@
                   No resources found
                 </td>
               </tr>
-              <tr v-else v-for="resource in resources" :key="resource.id">
+              <tr v-else-if="sortedResources.length === 0">
+                <td colspan="6" class="text-center py-4 text-muted">
+                  No matching resources
+                </td>
+              </tr>
+              <!-- 遍历组件里的计算属性 paginatedResources（分页后的资源数组），每个元素取名为 resource，然后在模板里用 resource.title、resource.category 等来显示 -->
+              <tr v-else v-for="resource in paginatedResources" :key="resource.id">
                 <td>
                   <div class="d-flex align-items-center">
                     <img v-if="resource.coverUrl" :src="resource.coverUrl" 
@@ -57,6 +107,7 @@
                 <td>{{ resource.viewCount || 0 }}</td>
                 <td>{{ formatDate(resource.createdAt) }}</td>
                 <td>
+                  <!-- btn-group是 Bootstrap 提供的一个按钮分组类,作用是：把多个按钮放在一行，让它们紧密排列成一个“按钮组”，边界相连、圆角衔接，看起来像一个整体工具条。 -->
                   <div class="btn-group" role="group">
                     <button @click="editResource(resource)" class="btn btn-sm btn-outline-primary">
                       <i class="iconfont icon-edit"></i>
@@ -70,18 +121,39 @@
             </tbody>
           </table>
         </div>
+        <!-- Pagination -->
+        <div v-if="totalPages > 1" class="d-flex justify-content-between align-items-center p-3">
+          <div  style="color: #ffffff;">Page {{ currentPage }} of {{ totalPages }}</div>
+          <nav aria-label="Page navigation">
+            <ul class="pagination mb-0">
+              <!-- 当当前页是第一页时（currentPage === 1），让按钮变灰并禁用.Bootstrap 的分页样式中有定义：.page-item.disabled .page-link -->
+              <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                <button class="page-link" @click="changePage(currentPage - 1)" :disabled="currentPage === 1">Prev</button>
+              </li>
+              <li v-for="n in pageNumbers" :key="n" class="page-item" :class="{ active: n === currentPage }">
+                <!-- 如果当前页是第n页（n === currentPage），让按钮变成亮色。Bootstrap 的分页样式中有定义：.page-item.active .page-link -->
+                <button class="page-link" @click="changePage(n)">{{ n }}</button>
+              </li>
+              <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                <button class="page-link" @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">Next</button>
+              </li>
+            </ul>
+          </nav>
+        </div>
       </div>
     </div>
 
     <!-- Create/Edit Modal -->
+     <!-- tabindex="-1"这是 HTML 原生属性。让这个元素可以被“聚焦”，并且防止用户用 Tab 键误切换焦点到它内部。 -->
     <div v-if="showCreateModal || showEditModal" class="modal show d-block" tabindex="-1">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">{{ showCreateModal ? 'Create New Resource' : 'Edit Resource' }}</h5>
-            <button @click="closeModal" type="button" class="btn-close"></button>
+            <button @click="closeModal" type="button" class="btn-close btn-close-white"></button>
           </div>
           <div class="modal-body">
+            <!-- 事件监听（@）+ 修饰符（.prevent） 的组合。它同时做了两件事：1拦截表单的默认提交行为（HTML 原生 <form> 会自动提交）2调用你组件里的方法 saveResource() -->
             <form @submit.prevent="saveResource">
               <div class="row">
                 <div class="col-md-8">
@@ -91,7 +163,8 @@
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Excerpt</label>
-                    <textarea v-model="formData.excerpt" class="form-control" rows="3"></textarea>
+                    <!-- <textarea> 是 HTML 提供的一个多行文本输入框。 -->
+                    <textarea v-model="formData.excerpt" class="form-control" rows="3"></textarea> 
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Content *</label>
@@ -159,8 +232,22 @@ export default {
       loading: true,
       showCreateModal: false,
       showEditModal: false,
-      saving: false,
+      saving: false,//当前是否正在保存资源
       editingResource: null,
+      // Filters / Sort / Pagination state
+      filters: {
+        title: '',
+        category: '',
+        status: '',
+        viewsMin: null,
+        viewsMax: null,
+        createdFrom: '', // yyyy-MM-dd
+        createdTo: ''    // yyyy-MM-dd
+      },
+      sortKey: 'createdAt',
+      sortAsc: false,
+      currentPage: 1,
+      pageSize: 5,
       formData: {
         title: '',
         excerpt: '',
@@ -176,6 +263,73 @@ export default {
   async mounted() {
     await this.loadResources();
   },
+  computed: {
+    filteredResources() {
+      const f = this.filters;
+      const fromTs = f.createdFrom ? new Date(f.createdFrom).setHours(0,0,0,0) : null;
+      const toTs = f.createdTo ? new Date(f.createdTo).setHours(23,59,59,999) : null;
+      const minViews = typeof f.viewsMin === 'number' && !isNaN(f.viewsMin) ? f.viewsMin : null;
+      const maxViews = typeof f.viewsMax === 'number' && !isNaN(f.viewsMax) ? f.viewsMax : null;
+      return this.resources.filter(r => {
+        const title = (r.title || '').toLowerCase();
+        const category = (r.category || '').toLowerCase();
+        const status = (r.status || '').toLowerCase();
+        const views = Number(r.viewCount || 0);
+        const createdVal = r.createdAt;
+        const createdDate = createdVal?.toDate ? createdVal.toDate() : (createdVal ? new Date(createdVal) : null);//把资源的创建时间 createdVal 转换成一个标准的 JavaScript 日期对象 Date
+        const createdTs = createdDate ? createdDate.getTime() : null;
+
+        if (f.title && !title.includes(f.title.toLowerCase())) return false;
+        if (f.category && !category.includes(f.category.toLowerCase())) return false;
+        if (f.status && !status.includes(f.status.toLowerCase())) return false;
+        if (minViews !== null && views < minViews) return false;
+        if (maxViews !== null && views > maxViews) return false;
+        if (fromTs !== null && (createdTs === null || createdTs < fromTs)) return false;
+        if (toTs !== null && (createdTs === null || createdTs > toTs)) return false;
+        return true;
+      });
+    },
+    sortedResources() {
+      const key = this.sortKey;
+      const asc = this.sortAsc ? 1 : -1; // default descending for createdAt by default
+      const arr = [...this.filteredResources];
+      const getVal = (r) => {
+        if (key === 'createdAt') {
+          const v = r.createdAt;
+          const d = v?.toDate ? v.toDate() : (v ? new Date(v) : null);
+          return d ? d.getTime() : 0;
+        }
+        if (key === 'viewCount') return Number(r.viewCount || 0);
+        return (r[key] || '').toString().toLowerCase();
+      };
+      return arr.sort((a, b) => {
+        const va = getVal(a);
+        const vb = getVal(b);
+        if (va < vb) return -asc;
+        if (va > vb) return asc;
+        return 0;
+      });
+    },
+    totalPages() {
+      return Math.max(1, Math.ceil(this.sortedResources.length / this.pageSize));
+    },
+    paginatedResources() {//它从 sortedResources（已排序的资源列表）里，取出当前页要显示的那几条数据。
+      const start = (this.currentPage - 1) * this.pageSize;
+      return this.sortedResources.slice(start, start + this.pageSize);
+    },
+    pageNumbers() {
+      const pages = this.totalPages;
+      const nums = [];
+      for (let i = 1; i <= pages; i++) nums.push(i);
+      return nums;
+    }
+  },
+  watch: {
+    filters: {
+      handler() { this.currentPage = 1; },
+      deep: true
+    }
+  },
   methods: {
     async loadResources() {
       this.loading = true;
@@ -187,10 +341,24 @@ export default {
         this.loading = false;
       }
     },
+    setSort(key) {
+      if (this.sortKey === key) {
+        this.sortAsc = !this.sortAsc;
+      } else {
+        this.sortKey = key;
+        // default ascending except createdAt which often makes sense descending
+        this.sortAsc = key === 'createdAt' ? false : true;
+      }
+      this.currentPage = 1;
+    },
+    changePage(n) {
+      if (n < 1 || n > this.totalPages) return;
+      this.currentPage = n;
+    },
     editResource(resource) {
-      this.editingResource = resource;
-      this.formData = { ...resource };
-      this.showEditModal = true;
+      this.editingResource = resource;//resource 是你点的那一行的数据对象；Vue 会把它保存在组件的变量 editingResource 中
+      this.formData = { ...resource };//复制出一个新的对象
+      this.showEditModal = true;//显示“编辑弹窗”因为前面你已经设置了 formData = { ...resource }，所以一打开编辑框时，这些输入框都会自动显示原本的内容。
     },
     async deleteResource(id) {
       if (confirm('Are you sure you want to delete this resource?')) {
@@ -228,8 +396,8 @@ export default {
         } else {
           await updateResource(this.editingResource.id, this.formData);
         }
-        await this.loadResources();
-        this.closeModal();
+        await this.loadResources();//在保存成功后，重新加载资源列表
+        this.closeModal();//保存完成后，关闭弹出的编辑窗口。
       } catch (error) {
         console.error('Error saving resource:', error);
       } finally {
@@ -246,19 +414,17 @@ export default {
 </script>
 
 <style scoped>
-.AdminResources-hero {
-  
+
+.admin-resources-page {
+  min-height: 100vh;
   background: url('/AdminResources.png') center center / cover no-repeat fixed;
+
+}
+.AdminResources-hero {
   position: relative;
   padding-top: 80px; /* avoid overlap with fixed navbar */
   min-height: calc(100vh - 80px);
 }
-.admin-resources-page {
-  min-height: 100vh;
-  background: rgba(245, 218, 218, 0.39);
-
-}
-
 .admin-header {
   background: linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.1) 100%);
   padding: 3rem 0;
@@ -302,7 +468,7 @@ export default {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #CCCCCC, #a56817);
+  background: linear-gradient(135deg, #CCCCCC, #006372);
   border: none;
   color: #ffffff;
   font-weight: 600;
@@ -311,7 +477,7 @@ export default {
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #a56817, #CCCCCC);
+  background: linear-gradient(135deg, #006372, #CCCCCC);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
   color: #ffffff;
@@ -384,5 +550,10 @@ export default {
 
 .spinner-border {
   border-width: 0.2em;
+}
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
 }
 </style>

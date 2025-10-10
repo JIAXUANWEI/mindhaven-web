@@ -63,7 +63,7 @@
 
 <script>
 import { auth, db } from "../firebase.js";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 
 export default {
@@ -116,12 +116,15 @@ export default {
                     createdAt: new Date()  // 注册时间
                 });
 
+                // 立即注销，避免注册后处于已登录状态（Navbar 显示 Welcome）
+                await signOut(auth);
+
                 // 注册成功 → 显示sucess
                 this.showSuccess = true;
 
                 // 2秒后跳转到登录页
                 setTimeout(() => {
-                this.$router.push("/login");
+                this.$emit('open-login');
                 }, 2000);
 
             } catch (err) {

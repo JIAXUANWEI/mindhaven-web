@@ -113,13 +113,15 @@ export default {
         this.isAdmin = false;
       }
     });
-    // 监听全局事件以在其它组件触发登录弹窗
+    // 监听全局事件以在其它组件触发登录/注册弹窗
     window.addEventListener('open-login', this.openLogin);
+    window.addEventListener('open-register', this.openRegister);
     // 监听用户角色更新事件
     window.addEventListener('user-role-updated', this.handleRoleUpdate);
   },
   beforeUnmount() {
     window.removeEventListener('open-login', this.openLogin);
+    window.removeEventListener('open-register', this.openRegister);
     window.removeEventListener('user-role-updated', this.handleRoleUpdate);
   },
   methods: {
@@ -160,12 +162,18 @@ export default {
       this.activeDropdown = this.activeDropdown === dropdownName ? null : dropdownName;
     },
     openLogin() {
+      if (this.$route.path !== '/') {
+        this.$router.push('/');
+      }
       this.showLoginModal = true;
     },
     closeLogin() {
       this.showLoginModal = false;
     },
     openRegister() {
+      if (this.$route.path !== '/') {
+        this.$router.push('/');
+      }
       this.showRegisterModal = true;
     },
     closeRegister() {

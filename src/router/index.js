@@ -25,7 +25,7 @@ import AdminUsers from '../views/AdminUsers.vue'
 const routes = [
   { path: '/', component: Home },
   // { path: '/login', component: Login }, // Login now handled by modal
-  { path: '/register', component: Register },
+  // { path: '/register', component: Register }, // Register handled by modal
   { path: '/about', component: About },
   { path: '/services', component: Services },
   { path: '/stories', name: 'stories', component: StoriesList },
@@ -60,6 +60,15 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const currentUser = auth.currentUser;
   
+  // Redirect dedicated register route to Home and open register modal
+  if (to.path === '/register') {
+    next('/');
+    setTimeout(() => {
+      window.dispatchEvent(new Event('open-register'));
+    }, 100);
+    return;
+  }
+
   // Check if route requires authentication
   if (to.meta.requiresAuth && !currentUser) {
     // Redirect to home page and trigger login modal
