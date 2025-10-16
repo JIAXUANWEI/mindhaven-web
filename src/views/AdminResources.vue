@@ -221,195 +221,186 @@
   </div>
 </template>
 
-<script>
-import { fetchAllResources, createResource, updateResource, deleteResource } from '../services/resources';
+<script setup>
+import { ref, reactive, computed, watch, onMounted } from 'vue';
+import { fetchAllResources, createResource, updateResource, deleteResource as deleteResourceApi } from '../services/resources';
 
-export default {
-  name: 'AdminResources',
-  data() {
-    return {
-      resources: [],
-      loading: true,
-      showCreateModal: false,
-      showEditModal: false,
-      saving: false,//当前是否正在保存资源
-      editingResource: null,
-      // Filters / Sort / Pagination state
-      filters: {
-        title: '',
-        category: '',
-        status: '',
-        viewsMin: null,
-        viewsMax: null,
-        createdFrom: '', // yyyy-MM-dd
-        createdTo: ''    // yyyy-MM-dd
-      },
-      sortKey: 'createdAt',
-      sortAsc: false,
-      currentPage: 1,
-      pageSize: 5,
-      formData: {
-        title: '',
-        excerpt: '',
-        content: '',
-        category: '',
-        coverUrl: '',
-        link: '',
-        status: 'draft',
-        priority: 5
-      }
-    }
-  },
-  async mounted() {
-    await this.loadResources();
-  },
-  computed: {
-    filteredResources() {
-      const f = this.filters;
-      const fromTs = f.createdFrom ? new Date(f.createdFrom).setHours(0,0,0,0) : null;
-      const toTs = f.createdTo ? new Date(f.createdTo).setHours(23,59,59,999) : null;
-      const minViews = typeof f.viewsMin === 'number' && !isNaN(f.viewsMin) ? f.viewsMin : null;
-      const maxViews = typeof f.viewsMax === 'number' && !isNaN(f.viewsMax) ? f.viewsMax : null;
-      return this.resources.filter(r => {
-        const title = (r.title || '').toLowerCase();
-        const category = (r.category || '').toLowerCase();
-        const status = (r.status || '').toLowerCase();
-        const views = Number(r.viewCount || 0);
-        const createdVal = r.createdAt;
-        const createdDate = createdVal?.toDate ? createdVal.toDate() : (createdVal ? new Date(createdVal) : null);//把资源的创建时间 createdVal 转换成一个标准的 JavaScript 日期对象 Date
-        const createdTs = createdDate ? createdDate.getTime() : null;
+const resources = ref([]);
+const loading = ref(true);
+const showCreateModal = ref(false);
+const showEditModal = ref(false);
+const saving = ref(false);
+const editingResource = ref(null);
 
-        if (f.title && !title.includes(f.title.toLowerCase())) return false;
-        if (f.category && !category.includes(f.category.toLowerCase())) return false;
-        if (f.status && !status.includes(f.status.toLowerCase())) return false;
-        if (minViews !== null && views < minViews) return false;
-        if (maxViews !== null && views > maxViews) return false;
-        if (fromTs !== null && (createdTs === null || createdTs < fromTs)) return false;
-        if (toTs !== null && (createdTs === null || createdTs > toTs)) return false;
-        return true;
-      });
-    },
-    sortedResources() {
-      const key = this.sortKey;
-      const asc = this.sortAsc ? 1 : -1; // default descending for createdAt by default
-      const arr = [...this.filteredResources];
-      const getVal = (r) => {
-        if (key === 'createdAt') {
-          const v = r.createdAt;
-          const d = v?.toDate ? v.toDate() : (v ? new Date(v) : null);
-          return d ? d.getTime() : 0;
-        }
-        if (key === 'viewCount') return Number(r.viewCount || 0);
-        return (r[key] || '').toString().toLowerCase();
-      };
-      return arr.sort((a, b) => {
-        const va = getVal(a);
-        const vb = getVal(b);
-        if (va < vb) return -asc;
-        if (va > vb) return asc;
-        return 0;
-      });
-    },
-    totalPages() {
-      return Math.max(1, Math.ceil(this.sortedResources.length / this.pageSize));
-    },
-    paginatedResources() {//它从 sortedResources（已排序的资源列表）里，取出当前页要显示的那几条数据。
-      const start = (this.currentPage - 1) * this.pageSize;
-      return this.sortedResources.slice(start, start + this.pageSize);
-    },
-    pageNumbers() {
-      const pages = this.totalPages;
-      const nums = [];
-      for (let i = 1; i <= pages; i++) nums.push(i);
-      return nums;
+const filters = reactive({
+  title: '',
+  category: '',
+  status: '',
+  viewsMin: null,
+  viewsMax: null,
+  createdFrom: '',
+  createdTo: ''
+});
+
+const sortKey = ref('createdAt');
+const sortAsc = ref(false);
+const currentPage = ref(1);
+const pageSize = ref(5);
+
+const formData = reactive({
+  title: '',
+  excerpt: '',
+  content: '',
+  category: '',
+  coverUrl: '',
+  link: '',
+  status: 'draft',
+  priority: 5
+});
+
+async function loadResources() {
+  loading.value = true;
+  try {
+    resources.value = await fetchAllResources({ limitCount: 100 });
+  } catch (error) {
+    console.error('Error loading resources:', error);
+  } finally {
+    loading.value = false;
+  }
+}
+
+onMounted(loadResources);
+
+const filteredResources = computed(() => {
+  const f = filters;
+  const fromTs = f.createdFrom ? new Date(f.createdFrom).setHours(0,0,0,0) : null;
+  const toTs = f.createdTo ? new Date(f.createdTo).setHours(23,59,59,999) : null;
+  const minViews = typeof f.viewsMin === 'number' && !isNaN(f.viewsMin) ? f.viewsMin : null;
+  const maxViews = typeof f.viewsMax === 'number' && !isNaN(f.viewsMax) ? f.viewsMax : null;
+  return resources.value.filter(r => {
+    const title = (r.title || '').toLowerCase();
+    const category = (r.category || '').toLowerCase();
+    const status = (r.status || '').toLowerCase();
+    const views = Number(r.viewCount || 0);
+    const createdVal = r.createdAt;
+    const createdDate = createdVal?.toDate ? createdVal.toDate() : (createdVal ? new Date(createdVal) : null);
+    const createdTs = createdDate ? createdDate.getTime() : null;
+
+    if (f.title && !title.includes(f.title.toLowerCase())) return false;
+    if (f.category && !category.includes(f.category.toLowerCase())) return false;
+    if (f.status && !status.includes(f.status.toLowerCase())) return false;
+    if (minViews !== null && views < minViews) return false;
+    if (maxViews !== null && views > maxViews) return false;
+    if (fromTs !== null && (createdTs === null || createdTs < fromTs)) return false;
+    if (toTs !== null && (createdTs === null || createdTs > toTs)) return false;
+    return true;
+  });
+});
+
+const sortedResources = computed(() => {
+  const key = sortKey.value;
+  const asc = sortAsc.value ? 1 : -1;
+  const arr = [...filteredResources.value];
+  const getVal = (r) => {
+    if (key === 'createdAt') {
+      const v = r.createdAt;
+      const d = v?.toDate ? v.toDate() : (v ? new Date(v) : null);
+      return d ? d.getTime() : 0;
     }
-  },
-  watch: {
-    filters: {
-      handler() { this.currentPage = 1; },
-      deep: true
-    }
-  },
-  methods: {
-    async loadResources() {
-      this.loading = true;
-      try {
-        this.resources = await fetchAllResources({ limitCount: 100 });
-      } catch (error) {
-        console.error('Error loading resources:', error);
-      } finally {
-        this.loading = false;
-      }
-    },
-    setSort(key) {
-      if (this.sortKey === key) {
-        this.sortAsc = !this.sortAsc;
-      } else {
-        this.sortKey = key;
-        // default ascending except createdAt which often makes sense descending
-        this.sortAsc = key === 'createdAt' ? false : true;
-      }
-      this.currentPage = 1;
-    },
-    changePage(n) {
-      if (n < 1 || n > this.totalPages) return;
-      this.currentPage = n;
-    },
-    editResource(resource) {
-      this.editingResource = resource;//resource 是你点的那一行的数据对象；Vue 会把它保存在组件的变量 editingResource 中
-      this.formData = { ...resource };//复制出一个新的对象
-      this.showEditModal = true;//显示“编辑弹窗”因为前面你已经设置了 formData = { ...resource }，所以一打开编辑框时，这些输入框都会自动显示原本的内容。
-    },
-    async deleteResource(id) {
-      if (confirm('Are you sure you want to delete this resource?')) {
-        try {
-          await deleteResource(id);
-          await this.loadResources();
-        } catch (error) {
-          console.error('Error deleting resource:', error);
-        }
-      }
-    },
-    closeModal() {
-      this.showCreateModal = false;
-      this.showEditModal = false;
-      this.editingResource = null;
-      this.resetForm();
-    },
-    resetForm() {
-      this.formData = {
-        title: '',
-        excerpt: '',
-        content: '',
-        category: '',
-        coverUrl: '',
-        link: '',
-        status: 'draft',
-        priority: 5
-      };
-    },
-    async saveResource() {
-      this.saving = true;
-      try {
-        if (this.showCreateModal) {
-          await createResource(this.formData);
-        } else {
-          await updateResource(this.editingResource.id, this.formData);
-        }
-        await this.loadResources();//在保存成功后，重新加载资源列表
-        this.closeModal();//保存完成后，关闭弹出的编辑窗口。
-      } catch (error) {
-        console.error('Error saving resource:', error);
-      } finally {
-        this.saving = false;
-      }
-    },
-    formatDate(timestamp) {
-      if (!timestamp) return 'N/A';
-      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-      return date.toLocaleDateString();
+    if (key === 'viewCount') return Number(r.viewCount || 0);
+    return (r[key] || '').toString().toLowerCase();
+  };
+  return arr.sort((a, b) => {
+    const va = getVal(a);
+    const vb = getVal(b);
+    if (va < vb) return -asc;
+    if (va > vb) return asc;
+    return 0;
+  });
+});
+
+const totalPages = computed(() => Math.max(1, Math.ceil(sortedResources.value.length / pageSize.value)));
+
+const paginatedResources = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  return sortedResources.value.slice(start, start + pageSize.value);
+});
+
+const pageNumbers = computed(() => {
+  const pages = totalPages.value;
+  const nums = [];
+  for (let i = 1; i <= pages; i++) nums.push(i);
+  return nums;
+});
+
+watch(filters, () => { currentPage.value = 1; }, { deep: true });
+
+function setSort(key) {
+  if (sortKey.value === key) {
+    sortAsc.value = !sortAsc.value;
+  } else {
+    sortKey.value = key;
+    sortAsc.value = key === 'createdAt' ? false : true;
+  }
+  currentPage.value = 1;
+}
+
+function changePage(n) {
+  if (n < 1 || n > totalPages.value) return;
+  currentPage.value = n;
+}
+
+function editResource(resource) {
+  editingResource.value = resource;
+  Object.assign(formData, resource);
+  showEditModal.value = true;
+}
+
+async function deleteResource(id) {
+  if (confirm('Are you sure you want to delete this resource?')) {
+    try {
+      await deleteResourceApi(id);
+      await loadResources();
+    } catch (error) {
+      console.error('Error deleting resource:', error);
     }
   }
+}
+
+function resetForm() {
+  Object.assign(formData, {
+    title: '', excerpt: '', content: '', category: '', coverUrl: '', link: '', status: 'draft', priority: 5
+  });
+}
+
+function closeModal() {
+  showCreateModal.value = false;
+  showEditModal.value = false;
+  editingResource.value = null;
+  resetForm();
+}
+
+async function saveResource() {
+  saving.value = true;
+  try {
+    if (showCreateModal.value) {
+      await createResource(formData);
+    } else if (editingResource.value) {
+      await updateResource(editingResource.value.id, formData);
+    }
+    await loadResources();
+    closeModal();
+  } catch (error) {
+    console.error('Error saving resource:', error);
+  } finally {
+    saving.value = false;
+  }
+}
+
+function formatDate(timestamp) {
+  if (!timestamp) return 'N/A';
+  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  return date.toLocaleDateString();
 }
 </script>
 

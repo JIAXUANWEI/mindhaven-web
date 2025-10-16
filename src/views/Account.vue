@@ -202,8 +202,7 @@
           </div>
         </div>
         <div v-else-if="activeTab==='mood'">
-          <div class="fw-semibold mb-2">Mood Tracker</div>
-          <div class="text-muted">Track your mood here.</div>
+          <MoodTracker />
         </div>
         <div v-else>
           <div class="fw-semibold mb-2">Settings</div>
@@ -237,11 +236,13 @@ import { fetchUserLikes, fetchUserComments } from '../services/userInteractions.
 import { fetchStoryById, createUserStory, fetchUserStories, updateUserStory, deleteUserStory } from '../services/stories.js';
 import { fetchResourceById } from '../services/resources.js';
 import CustomAlert from '../components/CustomAlert.vue';
+import MoodTracker from './MoodTracker.vue';
 
 export default {
   name: "AccountView",
   components: {
-    CustomAlert
+    CustomAlert,
+    MoodTracker
   },
   data() {
     return {

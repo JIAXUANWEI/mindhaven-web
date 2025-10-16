@@ -207,183 +207,179 @@
   
 </template>
 
-<script>
-import { fetchAllUsers, updateUserRole, deleteUser } from '../services/users';
+<script setup>
+import { ref, reactive, computed, watch, onMounted } from 'vue';
+import { fetchAllUsers, updateUserRole, deleteUser as deleteUserApi } from '../services/users';
 
-export default {
-  name: 'AdminUsers',
-  data() {
-    return {
-      users: [],
-      loading: true,
-      showDetailsModal: false,
-      selectedUser: null,
-      // Filters / Sort / Pagination state
-      filters: {
-        email: '',
-        role: '',
-        storiesMin: null,
-        storiesMax: null,
-        likesMin: null,
-        likesMax: null,
-        commentsMin: null,
-        commentsMax: null,
-        joinedFrom: '', // yyyy-MM-dd
-        joinedTo: ''    // yyyy-MM-dd
-      },
-      sortKey: 'createdAt',
-      sortAsc: false,
-      currentPage: 1,
-      pageSize: 5
-    }
-  },
-  async mounted() {
-    await this.loadUsers();
-  },
-  computed: {
-    filteredUsers() {
-      const f = this.filters;
-      const fromTs = f.joinedFrom ? new Date(f.joinedFrom).setHours(0,0,0,0) : null;
-      const toTs = f.joinedTo ? new Date(f.joinedTo).setHours(23,59,59,999) : null;
-      const getNum = (v) => (typeof v === 'number' && !isNaN(v)) ? v : null;
-      const sMin = getNum(f.storiesMin), sMax = getNum(f.storiesMax);
-      const lMin = getNum(f.likesMin), lMax = getNum(f.likesMax);
-      const cMin = getNum(f.commentsMin), cMax = getNum(f.commentsMax);
-      return this.users.filter(u => {
-        const email = (u.email || '').toLowerCase();
-        const name = (u.displayName || '').toLowerCase();
-        const role = (u.role || 'user').toLowerCase();
-        const stories = Number(u.storiesCount || 0);
-        const likes = Number(u.likesCount || 0);
-        const comments = Number(u.commentsCount || 0);
-        const createdVal = u.createdAt;
-        const createdDate = createdVal?.toDate ? createdVal.toDate() : (createdVal ? new Date(createdVal) : null);
-        const createdTs = createdDate ? createdDate.getTime() : null;
+const users = ref([]);
+const loading = ref(true);
+const showDetailsModal = ref(false);
+const selectedUser = ref(null);
 
-        if (f.email && !email.includes(f.email.toLowerCase())) return false;
-        if (f.role && !role.includes(f.role.toLowerCase())) return false;
-        if (sMin !== null && stories < sMin) return false;
-        if (sMax !== null && stories > sMax) return false;
-        if (lMin !== null && likes < lMin) return false;
-        if (lMax !== null && likes > lMax) return false;
-        if (cMin !== null && comments < cMin) return false;
-        if (cMax !== null && comments > cMax) return false;
-        if (fromTs !== null && (createdTs === null || createdTs < fromTs)) return false;
-        if (toTs !== null && (createdTs === null || createdTs > toTs)) return false;
-        // Optional: name search
-        if (f.name && !name.includes((f.name || '').toLowerCase())) return false;
-        return true;
-      });
-    },
-    sortedUsers() {
-      const key = this.sortKey;
-      const asc = this.sortAsc ? 1 : -1; // default desc for createdAt
-      const arr = [...this.filteredUsers];
-      const getVal = (u) => {
-        if (key === 'createdAt') {
-          const v = u.createdAt;
-          const d = v?.toDate ? v.toDate() : (v ? new Date(v) : null);
-          return d ? d.getTime() : 0;
-        }
-        if (key === 'storiesCount') return Number(u.storiesCount || 0);
-        return 0;
-      };
-      return arr.sort((a, b) => {
-        const va = getVal(a);
-        const vb = getVal(b);
-        if (va < vb) return -asc;
-        if (va > vb) return asc;
-        return 0;
-      });
-    },
-    totalPages() {
-      return Math.max(1, Math.ceil(this.sortedUsers.length / this.pageSize));
-    },
-    paginatedUsers() {
-      const start = (this.currentPage - 1) * this.pageSize;
-      return this.sortedUsers.slice(start, start + this.pageSize);
-    },
-    pageNumbers() {
-      const pages = this.totalPages;
-      const nums = [];
-      for (let i = 1; i <= pages; i++) nums.push(i);
-      return nums;
+const filters = reactive({
+  email: '',
+  role: '',
+  storiesMin: null,
+  storiesMax: null,
+  likesMin: null,
+  likesMax: null,
+  commentsMin: null,
+  commentsMax: null,
+  joinedFrom: '',
+  joinedTo: ''
+});
+
+const sortKey = ref('createdAt');
+const sortAsc = ref(false);
+const currentPage = ref(1);
+const pageSize = ref(5);
+
+async function loadUsers() {
+  loading.value = true;
+  try {
+    const options = { limitCount: 100 };
+    users.value = await fetchAllUsers(options);
+  } catch (error) {
+    console.error('Error loading users:', error);
+  } finally {
+    loading.value = false;
+  }
+}
+
+onMounted(loadUsers);
+
+const filteredUsers = computed(() => {
+  const f = filters;
+  const fromTs = f.joinedFrom ? new Date(f.joinedFrom).setHours(0,0,0,0) : null;
+  const toTs = f.joinedTo ? new Date(f.joinedTo).setHours(23,59,59,999) : null;
+  const getNum = (v) => (typeof v === 'number' && !isNaN(v)) ? v : null;
+  const sMin = getNum(f.storiesMin), sMax = getNum(f.storiesMax);
+  const lMin = getNum(f.likesMin), lMax = getNum(f.likesMax);
+  const cMin = getNum(f.commentsMin), cMax = getNum(f.commentsMax);
+  return users.value.filter(u => {
+    const email = (u.email || '').toLowerCase();
+    const name = (u.displayName || '').toLowerCase();
+    const role = (u.role || 'user').toLowerCase();
+    const stories = Number(u.storiesCount || 0);
+    const likes = Number(u.likesCount || 0);
+    const comments = Number(u.commentsCount || 0);
+    const createdVal = u.createdAt;
+    const createdDate = createdVal?.toDate ? createdVal.toDate() : (createdVal ? new Date(createdVal) : null);
+    const createdTs = createdDate ? createdDate.getTime() : null;
+
+    if (f.email && !email.includes(f.email.toLowerCase())) return false;
+    if (f.role && !role.includes(f.role.toLowerCase())) return false;
+    if (sMin !== null && stories < sMin) return false;
+    if (sMax !== null && stories > sMax) return false;
+    if (lMin !== null && likes < lMin) return false;
+    if (lMax !== null && likes > lMax) return false;
+    if (cMin !== null && comments < cMin) return false;
+    if (cMax !== null && comments > cMax) return false;
+    if (fromTs !== null && (createdTs === null || createdTs < fromTs)) return false;
+    if (toTs !== null && (createdTs === null || createdTs > toTs)) return false;
+    if (f.name && !name.includes((f.name || '').toLowerCase())) return false;
+    return true;
+  });
+});
+
+const sortedUsers = computed(() => {
+  const key = sortKey.value;
+  const asc = sortAsc.value ? 1 : -1;
+  const arr = [...filteredUsers.value];
+  const getVal = (u) => {
+    if (key === 'createdAt') {
+      const v = u.createdAt;
+      const d = v?.toDate ? v.toDate() : (v ? new Date(v) : null);
+      return d ? d.getTime() : 0;
     }
-  },
-  watch: {
-    filters: {
-      handler() { this.currentPage = 1; },
-      deep: true
-    }
-  },
-  methods: {
-    async loadUsers() {
-      this.loading = true;
-      try {
-        const options = { limitCount: 100 };
-        this.users = await fetchAllUsers(options);
-      } catch (error) {
-        console.error('Error loading users:', error);
-      } finally {
-        this.loading = false;
-      }
-    },
-    setSort(key) {
-      if (this.sortKey === key) {
-        this.sortAsc = !this.sortAsc;
-      } else {
-        this.sortKey = key;
-        this.sortAsc = key === 'createdAt' ? false : true;
-      }
-      this.currentPage = 1;
-    },
-    changePage(n) {
-      if (n < 1 || n > this.totalPages) return;
-      this.currentPage = n;
-    },
-    async toggleUserRole(user) {
-      const newRole = user.role === 'admin' ? 'user' : 'admin';
-      if (confirm(`Are you sure you want to change ${user.email}'s role to ${newRole}?`)) {
-        try {
-          await updateUserRole(user.id, newRole);
-          await this.loadUsers();
-        } catch (error) {
-          console.error('Error updating user role:', error);
-          alert('Failed to update user role');
-        }
-      }
-    },
-    async deleteUser(userId) {
-      if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-        try {
-          await deleteUser(userId);
-          await this.loadUsers();
-        } catch (error) {
-          console.error('Error deleting user:', error);
-          alert('Failed to delete user');
-        }
-      }
-    },
-    viewUserDetails(user) {
-      this.selectedUser = user;
-      this.showDetailsModal = true;
-    },
-    closeDetailsModal() {
-      this.showDetailsModal = false;
-      this.selectedUser = null;
-    },
-    getUserAvatar(email) {
-      return `https://ui-avatars.com/api/?name=${encodeURIComponent(email.charAt(0))}&background=4f6&color=fff`;
-    },
-    getRoleClass(role) {
-      return role === 'admin' ? 'bg-danger' : 'bg-primary';
-    },
-    formatDate(timestamp) {
-      if (!timestamp) return 'N/A';
-      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-      return date.toLocaleDateString();
+    if (key === 'storiesCount') return Number(u.storiesCount || 0);
+    return 0;
+  };
+  return arr.sort((a, b) => {
+    const va = getVal(a);
+    const vb = getVal(b);
+    if (va < vb) return -asc;
+    if (va > vb) return asc;
+    return 0;
+  });
+});
+
+const totalPages = computed(() => Math.max(1, Math.ceil(sortedUsers.value.length / pageSize.value)));
+const paginatedUsers = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  return sortedUsers.value.slice(start, start + pageSize.value);
+});
+const pageNumbers = computed(() => {
+  const pages = totalPages.value;
+  const nums = [];
+  for (let i = 1; i <= pages; i++) nums.push(i);
+  return nums;
+});
+
+watch(filters, () => { currentPage.value = 1; }, { deep: true });
+
+function setSort(key) {
+  if (sortKey.value === key) {
+    sortAsc.value = !sortAsc.value;
+  } else {
+    sortKey.value = key;
+    sortAsc.value = key === 'createdAt' ? false : true;
+  }
+  currentPage.value = 1;
+}
+
+function changePage(n) {
+  if (n < 1 || n > totalPages.value) return;
+  currentPage.value = n;
+}
+
+async function toggleUserRole(user) {
+  const newRole = user.role === 'admin' ? 'user' : 'admin';
+  if (confirm(`Are you sure you want to change ${user.email}'s role to ${newRole}?`)) {
+    try {
+      await updateUserRole(user.id, newRole);
+      await loadUsers();
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      alert('Failed to update user role');
     }
   }
+}
+
+async function deleteUser(userId) {
+  if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+    try {
+      await deleteUserApi(userId);
+      await loadUsers();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      alert('Failed to delete user');
+    }
+  }
+}
+
+function viewUserDetails(user) {
+  selectedUser.value = user;
+  showDetailsModal.value = true;
+}
+
+function closeDetailsModal() {
+  showDetailsModal.value = false;
+  selectedUser.value = null;
+}
+
+function getUserAvatar(email) {
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(email.charAt(0))}&background=4f6&color=fff`;
+}
+
+function getRoleClass(role) {
+  return role === 'admin' ? 'bg-danger' : 'bg-primary';
+}
+
+function formatDate(timestamp) {
+  if (!timestamp) return 'N/A';
+  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  return date.toLocaleDateString();
 }
 </script>
 

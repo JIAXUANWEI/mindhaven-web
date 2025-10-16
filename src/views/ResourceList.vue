@@ -15,28 +15,26 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from 'vue';
 import ResourceCard from "../components/ResourceCard.vue";
 import { fetchPublishedResources } from "../services/resources";
 
-export default {
-  name: "ResourceListView",
-  components: { ResourceCard },
-  data() {
-    return { loading: true, error: "", resources: [] };
-  },
-  async mounted() {
-    try {
-      this.resources = await fetchPublishedResources({ limitCount: 50 });
-      this.error = "";
-    } catch (e) {
-      console.error(e);
-      this.error = "Failed to load resources.";
-    } finally {
-      this.loading = false;
-    }
+const loading = ref(true);
+const error = ref("");
+const resources = ref([]);
+
+onMounted(async () => {
+  try {
+    resources.value = await fetchPublishedResources({ limitCount: 50 });
+    error.value = "";
+  } catch (e) {
+    console.error(e);
+    error.value = "Failed to load resources.";
+  } finally {
+    loading.value = false;
   }
-};
+});
 </script>
 
 <style scoped>

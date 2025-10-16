@@ -76,90 +76,67 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { auth, db } from "../firebase.js";
 import { signInWithEmailAndPassword } from "firebase/auth"; 
-import { doc, getDoc, setDoc } from "firebase/firestore"; 
+import { doc, getDoc } from "firebase/firestore"; 
 
-export default {
-  name: "LoginView",
-  data() {
-    return {
-      email: "",
-      password: "",
-      remember: false,
-      errors: {},
-      formError: "",
-      showPassword: false
+const router = useRouter();
+const emit = defineEmits(['open-register', 'login-success']);
+
+const email = ref("");
+const password = ref("");
+const remember = ref(false);
+const errors = ref({});
+const formError = ref("");
+const showPassword = ref(false);
+
+async function login() {
+  errors.value = {};
+  formError.value = "";
+
+  if (!email.value) {
+    errors.value.email = "Email is required";
+  } else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.value)) {
+    errors.value.email = "Invalid email format";
+  } else if (!/(?=.*[A-Za-z])(?=.*\d)/.test(password.value)) {
+    errors.value.password = "Password must contain both letters and numbers";
+  }
+
+  if (!password.value) {
+    errors.value.password = "Password is required";
+  } else if (password.value.length < 6) {
+    errors.value.password = "Password must be at least 6 characters";
+  }
+
+  if (Object.keys(errors.value).length > 0) return;
+
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email.value, password.value);
+    const user = userCredential.user;
+
+    const docRef = doc(db, "users", user.uid);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const userData = docSnap.data();
+      const role = userData.role;
+      localStorage.setItem("currentUser", JSON.stringify({ email: user.email, role }));
+      window.dispatchEvent(new CustomEvent('user-role-updated', { detail: { email: user.email, role } }));
+
+      if (role === "admin") {
+        router.push("/admin");
+      }
+      emit("login-success");
+    } else {
+      throw new Error("User document not found in Firestore");
     }
-  },
-  methods: {
-     async login() {
-      this.errors = {}
-      this.formError = ""
-
-      // 表单检查
-      if (!this.email) {
-        this.errors.email = "Email is required"
-      } else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(this.email)) {
-        this.errors.email = "Invalid email format"
-      }else if (!/(?=.*[A-Za-z])(?=.*\d)/.test(this.password)) {
-        this.errors.password = "Password must contain both letters and numbers"
-      }
-
-      if (!this.password) {
-        this.errors.password = "Password is required"
-      } else if (this.password.length < 6) {
-        this.errors.password = "Password must be at least 6 characters"
-      }
-
-      // 如果有错误，终止提交
-      if (Object.keys(this.errors).length > 0) return
-
-       try {
-        // Firebase 登录
-        const userCredential = await signInWithEmailAndPassword(auth, this.email, this.password);
-        const user = userCredential.user;
-
-        // 获取 Firestore 用户文档
-        const docRef = doc(db, "users", user.uid);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          const userData = docSnap.data();
-          const role = userData.role; // 直接取出 role（必然存在）
-
-          // 保存到本地存储
-          localStorage.setItem("currentUser", JSON.stringify({ email: user.email, role }));
-
-          // 主动触发导航栏更新
-          window.dispatchEvent(new CustomEvent('user-role-updated', { 
-            detail: { email: user.email, role } 
-          }));
-
-          // 跳转逻辑：只有管理员才跳转，普通用户停留在当前页面
-          if (role === "admin") {
-            this.$router.push("/admin");
-          } else {
-            // 普通用户不跳转，停留在当前页面
-          }
-
-          // 关闭登录弹窗
-          this.$emit("login-success");
-        } else {
-          // 理论上不会发生，除非数据库缺少用户文档
-          throw new Error("User document not found in Firestore");
-        }
-      } catch (err) {
-        this.formError = "Invalid email or password";
-        console.error("Login error:", err);
-      }
-
-
-    },
-
-
-    }
+  } catch (err) {
+    formError.value = "Invalid email or password";
+    console.error("Login error:", err);
+  }
 }
 </script>
 

@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getFunctions } from "firebase/functions";
 import { getFirestore } from "firebase/firestore";  
 
 
@@ -19,5 +20,7 @@ const app = initializeApp(firebaseConfig);
 // 导出 auth、db 对象
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const projectId = firebaseConfig.projectId;
+export const functionsClient = getFunctions(app, 'us-central1');
 
 

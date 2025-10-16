@@ -123,127 +123,126 @@ status -->
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { fetchStoryById, recordStoryView, toggleStoryLike, fetchStoryReviews, addStoryReview } from "../services/stories";
 import { hasUserLiked } from "../services/userInteractions";
 import { auth } from "../firebase";
 
-export default {
-  name: "StoryDetail",
-  data(){ 
-    return { 
-      story: null, 
-      loading: true,
-      reviews: [],
-      newReview: "",
-      isLoggedIn: false,
-      isLiked: false // 添加点赞状态
-    }; 
-  },
-  computed: {
-    dateText(){
-      if (!this.story?.createdAt) return "";
-      const d = this.story.createdAt.toDate ? this.story.createdAt.toDate() : new Date(this.story.createdAt);
-      return d.toLocaleDateString();
-    }
-  },
-  methods: {
-    async handleLike() {
-      if (!this.story) return;
-      if (!this.isLoggedIn) {
-        window.dispatchEvent(new Event('open-login'));
-        return;
-      }
-      
-      try {
-        const current = auth.currentUser;
-        const result = await toggleStoryLike(this.story.id, current.uid);
-        
-        // 直接使用后端返回的准确数据
-        this.isLiked = result.liked;
-        this.story.likeCount = result.likeCount;
-        
-      } catch (e) { 
-        console.error('Like operation failed:', e); 
-      }
-    },
-    
-    async checkUserLikeStatus() {
-      if (!this.isLoggedIn || !this.story) return;
-      
-      try {
-        const current = auth.currentUser;
-        this.isLiked = await hasUserLiked(current.uid, this.story.id, 'story');
-      } catch (e) {
-        console.error('Error checking like status:', e);
-      }
-    },
-    async submitReview() {
-      const text = this.newReview && this.newReview.trim();
-      if (!text || !this.story) return;
-      if (!this.isLoggedIn) {
-        // 触发全局事件让 Navbar 打开登录弹窗
-        window.dispatchEvent(new Event('open-login'));
-        return;
-      }
-      try {
-        const current = auth.currentUser;
-        const author = current?.displayName || current?.email || 'Anonymous';
-        const id = await addStoryReview(this.story.id, { content: text, author, userId: current?.uid });
-        this.reviews.unshift({ id, author, content: text, createdAt: new Date() });
-        this.newReview = "";
-      } catch (e) { console.error(e); }
-    },
-    formatDate(ts) {
-      if (!ts) return '';
-      const d = ts.toDate ? ts.toDate() : new Date(ts);
-      return d.toLocaleDateString();
-    },
-    scrollToReviews() {
-      const el = this.$refs.reviewsSection;
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    },
-    goPublish() {
-      // 暂时跳到故事列表或发布入口（如有单独发布页可改这里）
-      this.$router.push('/stories');
-    },
-    goLogin() {
-      // 触发全局事件让 Navbar 打开登录弹窗
-      window.dispatchEvent(new Event('open-login'));
-    }
-  },
-  async mounted(){
-    const id = this.$route.params.id;
-    try {
-      this.story = await fetchStoryById(id);
-      if (this.story) {
-        await recordStoryView(id);
-        this.story.viewCount = (this.story.viewCount || 0) + 1;
-        this.reviews = await fetchStoryReviews(id, { size: 20 });
-      }
-    } catch (error) {
-      console.error('Error loading story:', error);
-    } finally {
-      this.loading = false;
-    }
+const route = useRoute();
+const router = useRouter();
 
-    // 监听登录状态
-    this.isLoggedIn = !!auth.currentUser;
-    auth.onAuthStateChanged(async (u) => { 
-      this.isLoggedIn = !!u;
-      if (u && this.story) {
-        await this.checkUserLikeStatus();
-      } else {
-        this.isLiked = false;
-      }
-    });
-    
-    // 如果已登录，检查点赞状态
-    if (this.isLoggedIn && this.story) {
-      await this.checkUserLikeStatus();
-    }
+const story = ref(null);
+const loading = ref(true);
+const reviews = ref([]);
+const newReview = ref("");
+const isLoggedIn = ref(false);
+const isLiked = ref(false);
+const reviewsSection = ref(null);
+
+const dateText = computed(() => {
+  if (!story.value?.createdAt) return "";
+  const d = story.value.createdAt.toDate ? story.value.createdAt.toDate() : new Date(story.value.createdAt);
+  return d.toLocaleDateString();
+});
+
+async function handleLike() {
+  if (!story.value) return;
+  if (!isLoggedIn.value) {
+    window.dispatchEvent(new Event('open-login'));
+    return;
   }
-};
+  try {
+    const current = auth.currentUser;
+    const result = await toggleStoryLike(story.value.id, current.uid);
+    isLiked.value = result.liked;
+    story.value.likeCount = result.likeCount;
+  } catch (e) {
+    console.error('Like operation failed:', e);
+  }
+}
+
+async function checkUserLikeStatus() {
+  if (!isLoggedIn.value || !story.value) return;
+  try {
+    const current = auth.currentUser;
+    isLiked.value = await hasUserLiked(current.uid, story.value.id, 'story');
+  } catch (e) {
+    console.error('Error checking like status:', e);
+  }
+}
+
+async function submitReview() {
+  const text = newReview.value && newReview.value.trim();
+  if (!text || !story.value) return;
+  if (!isLoggedIn.value) {
+    window.dispatchEvent(new Event('open-login'));
+    return;
+  }
+  try {
+    const current = auth.currentUser;
+    const author = current?.displayName || current?.email || 'Anonymous';
+    const id = await addStoryReview(story.value.id, { content: text, author, userId: current?.uid });
+    reviews.value.unshift({ id, author, content: text, createdAt: new Date() });
+    newReview.value = "";
+  } catch (e) { console.error(e); }
+}
+
+function formatDate(ts) {
+  if (!ts) return '';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString();
+}
+
+function scrollToReviews() {
+  const el = reviewsSection.value;
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function goPublish() {
+  router.push('/stories');
+}
+
+function goLogin() {
+  window.dispatchEvent(new Event('open-login'));
+}
+
+let unsubscribeAuth = null;
+onMounted(async () => {
+  const id = route.params.id;
+  try {
+    story.value = await fetchStoryById(id);
+    if (story.value) {
+      await recordStoryView(id);
+      story.value.viewCount = (story.value.viewCount || 0) + 1;
+      reviews.value = await fetchStoryReviews(id, { size: 20 });
+    }
+  } catch (error) {
+    console.error('Error loading story:', error);
+  } finally {
+    loading.value = false;
+  }
+
+  isLoggedIn.value = !!auth.currentUser;
+  const maybeUnsub = auth.onAuthStateChanged?.(async (u) => {
+    isLoggedIn.value = !!u;
+    if (u && story.value) {
+      await checkUserLikeStatus();
+    } else {
+      isLiked.value = false;
+    }
+  });
+  if (typeof maybeUnsub === 'function') unsubscribeAuth = maybeUnsub;
+
+  if (isLoggedIn.value && story.value) {
+    await checkUserLikeStatus();
+  }
+});
+
+onBeforeUnmount(() => {
+  if (unsubscribeAuth) unsubscribeAuth();
+});
 </script>
 
 <style scoped>

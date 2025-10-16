@@ -11,6 +11,7 @@ import StoriesList from "../views/StoryList.vue";
 import StoryDetail from "../components/StoryDetail.vue";
 import ResourceList from '../views/ResourceList.vue'
 import ResourceDetail from '../components/ResourceDetail.vue'
+import ProfessionalsMap from '../views/ProfessionalsMap.vue'
 import AdminDashboard from '../views/AdminDashboard.vue'
 import AdminResources from '../views/AdminResources.vue'
 import AdminStories from '../views/AdminStories.vue'
@@ -32,6 +33,7 @@ const routes = [
   { path: '/stories/:id', name: 'storyDetail', component: StoryDetail, props: true },
   { path: '/resources', name: 'resources', component: ResourceList },
   { path: '/resources/:id', name: 'resourceDetail', component: ResourceDetail, props: true },
+  { path: '/professionals', name: 'professionals', component: ProfessionalsMap },
   // { path: '/support', component: Support },
   // { path: '/wellbeing', component: Wellbeing },
   { path: '/account', component: Account },

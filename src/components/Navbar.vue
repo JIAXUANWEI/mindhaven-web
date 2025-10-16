@@ -1,5 +1,5 @@
 <template>
-  <nav class="navbar navbar-expand-lg">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-transparent">
     <div class="container">
       <router-link class="navbar-brand fw-bold" to="/">MindHaven</router-link>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -19,7 +19,7 @@
             </a>
             <ul class="dropdown-menu" :class="{ show: activeDropdown === 'services' }" @keydown.esc="hideDropdown('services')">
               <li><router-link class="dropdown-item" to="/services" @click="hideDropdown('services')">All Services</router-link></li>
-              <li><router-link class="dropdown-item" to="/services#professionals" @click="hideDropdown('services')">Get support from professionals</router-link></li>
+              <li><router-link class="dropdown-item" to="/professionals" @click="hideDropdown('services')">Get support from professionals</router-link></li>
               <li><router-link class="dropdown-item" to="/resources" @click="hideDropdown('services')">Learn by resource</router-link></li>
               <li><router-link class="dropdown-item" to="/stories" @click="hideDropdown('services')">Listen to others</router-link></li>
             </ul>
@@ -82,111 +82,112 @@
   <div v-if="showRegisterModal" class="modal-backdrop show" @click="closeRegister"></div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { auth } from '../firebase.js';
 import { signOut } from 'firebase/auth';
 import Login from '../views/Login.vue';
 import Register from '../views/Register.vue';
 
-export default {
-  name: 'Navbar',
-  data() {
-    return {
-      activeDropdown: null,
-      isLoggedIn: false,
-      userEmail: '',
-      isAdmin: false,
-      showLoginModal: false,
-      showRegisterModal: false
+const router = useRouter();
+const route = useRoute();
+
+const activeDropdown = ref(null);
+const isLoggedIn = ref(false);
+const userEmail = ref('');
+const isAdmin = ref(false);
+const showLoginModal = ref(false);
+const showRegisterModal = ref(false);
+
+function checkUserRole() {
+  const userData = JSON.parse(localStorage.getItem("currentUser") || "{}");
+  isAdmin.value = userData.role === "admin";
+}
+
+function checkAuthStatus() {
+  const user = auth.currentUser;
+  isLoggedIn.value = !!user;
+  if (user) {
+    userEmail.value = user.email;
+    checkUserRole();
+  }
+}
+
+let unsubscribeAuth = null;
+onMounted(() => {
+  checkAuthStatus();
+  const maybeUnsub = auth.onAuthStateChanged?.((user) => {
+    isLoggedIn.value = !!user;
+    if (user) {
+      userEmail.value = user.email;
+      checkUserRole();
+    } else {
+      userEmail.value = '';
+      isAdmin.value = false;
     }
-  },
-  mounted() {
-    this.checkAuthStatus();
-    // 监听认证状态变化
-    auth.onAuthStateChanged((user) => {
-      this.isLoggedIn = !!user;
-      if (user) {
-        this.userEmail = user.email;
-        this.checkUserRole();
-      } else {
-        this.userEmail = '';
-        this.isAdmin = false;
-      }
-    });
-    // 监听全局事件以在其它组件触发登录/注册弹窗
-    window.addEventListener('open-login', this.openLogin);
-    window.addEventListener('open-register', this.openRegister);
-    // 监听用户角色更新事件
-    window.addEventListener('user-role-updated', this.handleRoleUpdate);
-  },
-  beforeUnmount() {
-    window.removeEventListener('open-login', this.openLogin);
-    window.removeEventListener('open-register', this.openRegister);
-    window.removeEventListener('user-role-updated', this.handleRoleUpdate);
-  },
-  methods: {
-    checkAuthStatus() {
-      const user = auth.currentUser;
-      this.isLoggedIn = !!user;
-      if (user) {
-        this.userEmail = user.email;
-        this.checkUserRole();
-      }
-    },
-    checkUserRole() {
-      const userData = JSON.parse(localStorage.getItem("currentUser") || "{}");
-      this.isAdmin = userData.role === "admin";
-    },
-    async logout() {
-      try {
-        await signOut(auth);
-        localStorage.removeItem("currentUser");
-        this.$router.push("/");
-      } catch (error) {
-        console.error("Logout error:", error);
-      }
-    },
-    showDropdown(dropdownName) {
-      this.activeDropdown = dropdownName;
-    },
-    hideDropdown(dropdownName) {
-      // 延迟隐藏，给用户时间移动到下拉菜单
-      setTimeout(() => {
-        if (this.activeDropdown === dropdownName) {
-          this.activeDropdown = null;
-        }
-      }, 100);
-    },
-    toggleDropdown(dropdownName) {
-      //是否this.activeDropdown === dropdownName，是的话activeDropdown为空，否则赋值dropdownName
-      this.activeDropdown = this.activeDropdown === dropdownName ? null : dropdownName;
-    },
-    openLogin() {
-      if (this.$route.path !== '/') {
-        this.$router.push('/');
-      }
-      this.showLoginModal = true;
-    },
-    closeLogin() {
-      this.showLoginModal = false;
-    },
-    openRegister() {
-      if (this.$route.path !== '/') {
-        this.$router.push('/');
-      }
-      this.showRegisterModal = true;
-    },
-    closeRegister() {
-      this.showRegisterModal = false;
-    },
-    handleRoleUpdate(event) {
-      const { email, role } = event.detail;
-      this.userEmail = email;
-      this.isAdmin = role === 'admin';
-      this.isLoggedIn = true;
+  });
+  if (typeof maybeUnsub === 'function') unsubscribeAuth = maybeUnsub;
+
+  window.addEventListener('open-login', openLogin);
+  window.addEventListener('open-register', openRegister);
+  window.addEventListener('user-role-updated', handleRoleUpdate);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('open-login', openLogin);
+  window.removeEventListener('open-register', openRegister);
+  window.removeEventListener('user-role-updated', handleRoleUpdate);
+  if (unsubscribeAuth) unsubscribeAuth();
+});
+
+async function logout() {
+  try {
+    await signOut(auth);
+    localStorage.removeItem("currentUser");
+    router.push("/");
+  } catch (error) {
+    console.error("Logout error:", error);
+  }
+}
+
+function showDropdown(dropdownName) {
+  activeDropdown.value = dropdownName;
+}
+function hideDropdown(dropdownName) {
+  setTimeout(() => {
+    if (activeDropdown.value === dropdownName) {
+      activeDropdown.value = null;
     }
-  },
-  components: { Login, Register }
+  }, 100);
+}
+function toggleDropdown(dropdownName) {
+  activeDropdown.value = activeDropdown.value === dropdownName ? null : dropdownName;
+}
+
+function openLogin() {
+  if (route.path !== '/') {
+    router.push('/');
+  }
+  showLoginModal.value = true;
+}
+function closeLogin() {
+  showLoginModal.value = false;
+}
+function openRegister() {
+  if (route.path !== '/') {
+    router.push('/');
+  }
+  showRegisterModal.value = true;
+}
+function closeRegister() {
+  showRegisterModal.value = false;
+}
+function handleRoleUpdate(event) {
+  const { email, role } = event.detail;
+  userEmail.value = email;
+  isAdmin.value = role === 'admin';
+  isLoggedIn.value = true;
 }
 </script>
 

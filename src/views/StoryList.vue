@@ -16,28 +16,26 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from 'vue';
 import StoryCard from "../components/StoryCard.vue";
 import { fetchLatestStories } from "../services/stories";
 
-export default {
-  name: "StoriesList",
-  components: { StoryCard },
-  data() {
-    return { loading: true, error: "", stories: [] };
-  },
-  async mounted() {
-    try {
-      this.stories = await fetchLatestStories({ size: 9 });
-      this.error = "";
-    } catch (e) {
-      console.error(e);
-      this.error = "Failed to load stories.";
-    } finally {
-      this.loading = false;
-    }
+const loading = ref(true);
+const error = ref("");
+const stories = ref([]);
+
+onMounted(async () => {
+  try {
+    stories.value = await fetchLatestStories({ size: 9 });
+    error.value = "";
+  } catch (e) {
+    console.error(e);
+    error.value = "Failed to load stories.";
+  } finally {
+    loading.value = false;
   }
-};
+});
 </script>
 
 <style scoped>

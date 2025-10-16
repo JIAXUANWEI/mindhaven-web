@@ -61,83 +61,72 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref } from 'vue';
 import { auth, db } from "../firebase.js";
 import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 
-export default {
-    name: "RegisterView",
-    data() {
-        return {
-            email: "",
-            password: "",
-            confirmPassword: "",
-            errors: {},
-            formError: "",
-            showSuccess: false 
-        };
-    },
-    methods: {
-        async register() {
-            this.errors = {};
-            this.formError = "";
+const emit = defineEmits(['open-login']);
 
-            // 表单检查
-            if (!this.email) {
-                this.errors.email = "Email is required";
-            } else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(this.email)) {
-                this.errors.email = "Invalid email format";
-            }
+const email = ref("");
+const password = ref("");
+const confirmPassword = ref("");
+const errors = ref({});
+const formError = ref("");
+const showSuccess = ref(false);
 
-            if (!this.password) {
-                this.errors.password = "Password is required";
-            } else if (this.password.length < 6) {
-                this.errors.password = "Password must be at least 6 characters";
-            }else if (!/(?=.*[A-Za-z])(?=.*\d)/.test(this.password)) {
-                this.errors.password = "Password must contain both letters and numbers"
-            }
+async function register() {
+  errors.value = {};
+  formError.value = "";
 
-            if (this.confirmPassword !== this.password) {
-                this.errors.confirmPassword = "Passwords do not match";
-            }
+  if (!email.value) {
+    errors.value.email = "Email is required";
+  } else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.value)) {
+    errors.value.email = "Invalid email format";
+  }
 
-            if (Object.keys(this.errors).length > 0) return;
+  if (!password.value) {
+    errors.value.password = "Password is required";
+  } else if (password.value.length < 6) {
+    errors.value.password = "Password must be at least 6 characters";
+  } else if (!/(?=.*[A-Za-z])(?=.*\d)/.test(password.value)) {
+    errors.value.password = "Password must contain both letters and numbers";
+  }
 
-            try {
-                // Firebase 注册
-                const userCredential = await createUserWithEmailAndPassword(auth, this.email, this.password);
-                const user = userCredential.user;
+  if (confirmPassword.value !== password.value) {
+    errors.value.confirmPassword = "Passwords do not match";
+  }
 
-                // Firestore 里建一条文档 users/{uid}
-                await setDoc(doc(db, "users", user.uid), {
-                    email: user.email,
-                    role: "user",          // 默认角色
-                    createdAt: new Date()  // 注册时间
-                });
+  if (Object.keys(errors.value).length > 0) return;
 
-                // 立即注销，避免注册后处于已登录状态（Navbar 显示 Welcome）
-                await signOut(auth);
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email.value, password.value);
+    const user = userCredential.user;
 
-                // 注册成功 → 显示sucess
-                this.showSuccess = true;
+    await setDoc(doc(db, "users", user.uid), {
+      email: user.email,
+      role: "user",
+      createdAt: new Date()
+    });
 
-                // 2秒后跳转到登录页
-                setTimeout(() => {
-                this.$emit('open-login');
-                }, 2000);
+    await signOut(auth);
 
-            } catch (err) {
-                if (err.code === "auth/email-already-in-use") {
-                    this.formError = "This email is already registered.";
-                } else {
-                    this.formError = "Registration failed. Please try again.";
-                }
-                console.error("Register error:", err);
-            }
-        }
+    showSuccess.value = true;
+
+    setTimeout(() => {
+      emit('open-login');
+    }, 2000);
+
+  } catch (err) {
+    if (err.code === "auth/email-already-in-use") {
+      formError.value = "This email is already registered.";
+    } else {
+      formError.value = "Registration failed. Please try again.";
     }
-};
+    console.error("Register error:", err);
+  }
+}
 </script>
 
 

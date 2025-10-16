@@ -86,50 +86,38 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { fetchResourceById, recordResourceView } from "../services/resources";
 
-export default {
-  name: "ResourceDetail",
-  data(){ 
-    return { 
-      resource: null, 
-      loading: true 
-    }; 
-  },
-  computed: {
-    formattedContent() {
-      if (!this.resource || !this.resource.content) return '';
-      
-      let content = this.resource.content;
-      
-      // 如果有link字段，将其作为图片插入到内容中
-      if (this.resource.link) {
-        // 在内容末尾添加图片
-        content += `\n\n<img src="${this.resource.link}" alt="Resource illustration" class="resource-image" />`;
-      }
-      
-      // 将换行符转换为HTML换行
-      content = content.replace(/\n/g, '<br>');
-      
-      return content;
-    }
-  },
-  async mounted(){
-    const id = this.$route.params.id;
-    try {
-      this.resource = await fetchResourceById(id);
-      if (this.resource) {
-        // 记录用户查看资源
-        await recordResourceView(id);
-      }
-    } catch (error) {
-      console.error('Error loading resource:', error);
-    } finally {
-      this.loading = false;
-    }
+const route = useRoute();
+const resource = ref(null);
+const loading = ref(true);
+
+const formattedContent = computed(() => {
+  if (!resource.value || !resource.value.content) return '';
+  let content = resource.value.content;
+  if (resource.value.link) {
+    content += `\n\n<img src="${resource.value.link}" alt="Resource illustration" class="resource-image" />`;
   }
-};
+  content = content.replace(/\n/g, '<br>');
+  return content;
+});
+
+onMounted(async () => {
+  const id = route.params.id;
+  try {
+    resource.value = await fetchResourceById(id);
+    if (resource.value) {
+      await recordResourceView(id);
+    }
+  } catch (error) {
+    console.error('Error loading resource:', error);
+  } finally {
+    loading.value = false;
+  }
+});
 </script>
 
 <style scoped>
