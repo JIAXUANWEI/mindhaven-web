@@ -1,6 +1,6 @@
 // src/services/stories.js - Firestore 实现
 import { db } from "../firebase";
-import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, updateDoc, increment, addDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
+import { collection, query, where, orderBy, limit, getDocs, doc, getDoc, updateDoc, addDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
 
 const storiesCol = collection(db, "stories");
 // 辅助函数mapSnap：把 Firestore 原始数据转换成你 Vue 组件更容易处理的形式
@@ -45,10 +45,10 @@ export async function getStoriesCount() {
 }
 
 // 记录浏览次数 +1
-export async function recordStoryView(storyId) {
+export async function recordStoryView(storyId, userId = null) {
   try {
-    const ref = doc(db, "stories", storyId);
-    await updateDoc(ref, { viewCount: increment(1) });
+    const { recordUserInteraction } = await import('./userInteractions.js');
+    await recordUserInteraction(userId, storyId, 'story', 'view');
   } catch (e) {
     console.error("recordStoryView error", e);
   }
@@ -60,29 +60,23 @@ export async function toggleStoryLike(storyId, userId) {
     const { hasUserLiked } = await import('./userInteractions.js');
     const hasLiked = await hasUserLiked(userId, storyId, 'story');
     
-    const ref = doc(db, "stories", storyId);
-    
     if (hasLiked) {
       // 取消点赞：删除交互记录并减少计数
       const { removeUserInteraction } = await import('./userInteractions.js');
       await removeUserInteraction(userId, storyId, 'story', 'like');
-      await updateDoc(ref, { likeCount: increment(-1) });
-      
-      // 获取更新后的计数
-      const updatedDoc = await getDoc(ref);
-      const newCount = updatedDoc.data()?.likeCount || 0;
-      
-      return { liked: false, likeCount: Math.max(newCount, 0) };
+      // 由触发器维护计数，这里以当前值-1作为即时返回
+      const curSnap = await getDoc(doc(db, 'stories', storyId));
+      const current = curSnap.data()?.likeCount || 0;
+      const newCount = Math.max(current - 1, 0);
+      return { liked: false, likeCount: newCount };
     } else {
       // 点赞：记录交互并增加计数
       const { recordUserInteraction } = await import('./userInteractions.js');
       await recordUserInteraction(userId, storyId, 'story', 'like');
-      await updateDoc(ref, { likeCount: increment(1) });
-      
-      // 获取更新后的计数
-      const updatedDoc = await getDoc(ref);
-      const newCount = updatedDoc.data()?.likeCount || 0;
-      
+      // 由触发器维护计数，这里以当前值+1作为即时返回
+      const curSnap = await getDoc(doc(db, 'stories', storyId));
+      const current = curSnap.data()?.likeCount || 0;
+      const newCount = current + 1;
       return { liked: true, likeCount: newCount };
     }
   } catch (e) {

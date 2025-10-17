@@ -10,13 +10,6 @@
         <button class="btn btn-outline-secondary" @click="searchNearby">Nearby</button>
         <button class="btn btn-outline-secondary" @click="useMyLocation">Use my location</button>
       </div>
-      <div class="col-auto ms-auto">
-        <select class="form-select" v-model="travelMode" style="min-width:140px; background-color: #d39219;">
-          <option value="mapbox/driving">Driving</option>
-          <option value="mapbox/walking">Walking</option>
-          <option value="mapbox/cycling">Cycling</option>
-        </select>
-      </div>
     </div>
     <div ref="mapEl" class="map-host"></div>
   </div>

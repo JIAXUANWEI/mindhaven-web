@@ -45,7 +45,6 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
-  increment,
   serverTimestamp
 } from "firebase/firestore";
 
@@ -107,12 +106,10 @@ export async function fetchResourceCategories() {
 }
 
 // 记录用户查看资源
-export async function recordResourceView(resourceId) {
+export async function recordResourceView(resourceId, userId = null) {
   try {
-    const resourceRef = doc(db, "resources", resourceId);
-    await updateDoc(resourceRef, {
-      viewCount: increment(1)
-    });
+    const { recordUserInteraction } = await import('./userInteractions.js');
+    await recordUserInteraction(userId, resourceId, 'resource', 'view');
   } catch (error) {
     console.error("Error recording resource view:", error);
   }

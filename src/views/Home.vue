@@ -12,7 +12,7 @@
       <div class="hero-text" :class="{ show: showSupport }" >
         <h1 class="fw-bold">Mindhaven</h1>
         <p class="lead" >Get support now</p>
-        <router-link to="/support"><button class="btn btn-dark">Go</button></router-link>
+        <router-link to="/professionals"><button class="btn btn-dark">Go</button></router-link>
       </div>
        <!-- 恶魔 图片改天使了但是我懒得换了后面都是demo -->
       <div class="demon" :class="{ show: showDemon }" ref="demon"></div>
@@ -64,18 +64,13 @@
 
     <!-- Get Support -->
     <section class="container-fluid bg-dark-gray py-5 text-center">
-        <h2 class="mb-4">GET SUPPORT FROM PROFESSIONALS</h2>
-        <div class="row g-4">
-          <div class="col-md-4" v-for="(support, i) in supports" :key="i">
-            <div class="card h-100 shadow-sm p-3">
-              <img src="https://via.placeholder.com/150" class="card-img-top rounded-circle" />
-              <div class="card-body">
-                <h5>{{ support.title }}</h5>
-                <button class="btn btn-dark">{{ support.button }}</button>
-              </div>
-            </div>
-          </div>
-        </div>
+      <h2 class="mb-4">GET SUPPORT FROM PROFESSIONALS</h2>
+      <div class="container-sm">
+              <router-link to="/professionals" class="btn btn-primary">
+                Open Professionals Map
+              </router-link>
+            
+      </div>
     </section>
 
         <!-- 返回顶部按钮 -->
@@ -99,11 +94,6 @@ export default {
   components: { StoryCard, ResourceCard },
   data() {
     return {
-      supports: [
-        { title: "Crisis Hotlines", button: "CRISIS HOTLINES" },
-        { title: "Local Services", button: "LOCAL SERVICES" },
-        { title: "Online Counselling", button: "ONLINE COUNSELLING" }
-      ],
       showSupport: false,
       // 恶魔相关
       showDemon: false,
@@ -157,7 +147,7 @@ async mounted() {
       const progress = window.scrollY / maxScroll; // 0 ~ 1
 
       // 小人横向移动
-      const stopProgress = 0.72;
+      const stopProgress = 0.75;
       const trackWidth = window.innerWidth - 100;
       const runnerProgress = Math.min(progress, stopProgress); // 小人只走到0.72
       runner.style.left = `${runnerProgress * trackWidth}px`;
@@ -172,7 +162,7 @@ async mounted() {
       const bgProgress = Math.min(progress, stopProgress);
       background.style.backgroundPositionX = `${bgProgress * 100}%`;
       // 显示网站名字
-      this.showSupport = progress > 0.65 && progress < 0.82;
+      this.showSupport = progress > 0.65 && progress < 0.75;
 
       // 计算恶魔宽度（用于居中与气泡偏移）
       const demonW = demon?.offsetWidth || 120;
@@ -255,7 +245,7 @@ async mounted() {
     },
     scrollToTop() {
       window.scrollTo({
-        top: 5000,           // 纵向滚动到 500px 高度
+        top: 4350,           // 纵向滚动到 500px 高度
         behavior: "smooth"  // 平滑滚动
       });
     }
@@ -471,6 +461,7 @@ async mounted() {
 .bg-dark-gray .text-decoration-none img {
   transition: all 0.3s ease;
 }
+
 
 </style>
 
